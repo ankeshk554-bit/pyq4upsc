@@ -6,159 +6,180 @@
   <title>UPSC Vault</title>
 
   <style>
-    :root {
-      --bg: #000;
-      --card: #0a0a0a;
-      --text: #e5e7eb;
-      --muted: rgba(255,255,255,0.65);
-      --border: #1f2937;
-      --accent: #3b82f6;
-      --good: #10b981;
-      --bad: #f43f5e;
-      --mark: #a855f7;
-      --chip: #111827;
-      --shadow: rgba(0,0,0,0.35);
-    }
-    html[data-theme="nord"] { --bg:#202b3b; --card:#293548; --text:#eceff4; --muted:#b7c3d4; --border:#46566c; --accent:#88c0d0; --chip:#354359; }
-    html[data-theme="solarized"] { --bg:#002b36; --card:#073642; --text:#eee8d5; --muted:#93a1a1; --border:#31515a; --accent:#2aa198; --chip:#16434c; }
-    html[data-theme="white"] { --bg:#f3f6fb; --card:#fff; --text:#192435; --muted:#53657c; --border:#ccd6e4; --accent:#2563eb; --chip:#e9eff7; --shadow:rgba(30,50,80,.06); }
-    html[data-theme="paper"] { --bg:#f5f0e5; --card:#fffcf4; --text:#39342b; --muted:#766c5a; --border:#d9cfbb; --accent:#976332; --chip:#ebe3d3; --shadow:rgba(80,60,20,.06); }
+
+    :root { --bg:#101614; --card:#18201d; --text:#eef2eb; --muted:#a1afa5; --border:#2c3831; --accent:#b8d9aa; --accent-ink:#162312; --good:#82cca5; --bad:#ef9a97; --mark:#ccb2ee; --chip:#202b25; --shadow:rgba(0,0,0,.2); }
+    html[data-theme="nord"] { --bg:#202b3b; --card:#293548; --text:#eceff4; --muted:#b7c3d4; --border:#46566c; --accent:#88c0d0; --accent-ink:#102b34; --chip:#354359; }
+    html[data-theme="solarized"] { --bg:#002b36; --card:#073642; --text:#eee8d5; --muted:#93a1a1; --border:#31515a; --accent:#7bc8bb; --accent-ink:#002b36; --chip:#16434c; }
+    html[data-theme="white"] { --bg:#f3f6f2; --card:#fff; --text:#223229; --muted:#637366; --border:#d9e2d8; --accent:#3d6845; --accent-ink:#fff; --chip:#eaf0e7; --good:#207344; --bad:#b62c30; --shadow:rgba(30,50,30,.06); }
+    html[data-theme="paper"] { --bg:#f5f0e5; --card:#fffcf4; --text:#39342b; --muted:#766c5a; --border:#d9cfbb; --accent:#976332; --accent-ink:#fff; --chip:#ebe3d3; --good:#267447; --bad:#b62c30; --shadow:rgba(80,60,20,.06); }
+    * { box-sizing:border-box; }
+    [hidden], .hidden { display:none !important; }
+    html,body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body { min-height:100vh; }
+    button,input,select,textarea { font:inherit; }
+    button { color:var(--text); background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 14px; cursor:pointer; font-size:13px; font-weight:550; transition:background .15s,border-color .15s; }
+    button:hover { background:var(--chip); border-color:var(--muted); }
+    button:disabled { opacity:.55; cursor:wait; }
     :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-    button:hover { border-color:var(--accent); }
-    button:disabled { opacity:.65; cursor:wait; }
-    button.active { background:var(--accent); color:var(--bg); }
-    .main { min-width:0; max-width:1100px; margin:0 auto; width:100%; }
-    .sidebar { flex-shrink:0; }
-    .letter { flex-shrink:0; }
-    .study-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
-    .study-header h1 { margin:0 0 8px; font-size:clamp(24px,4vw,34px); }
-    #notice { margin-bottom:16px; padding:12px; border:1px solid var(--border); border-radius:12px; }
-    #ai-dialog { position:fixed; inset:0 0 0 auto; width:min(440px,100%); height:100dvh; box-sizing:border-box; border-left:1px solid var(--border); background:var(--card); color:var(--text); padding:20px; z-index:20; overflow-y:auto; box-shadow:-12px 0 40px var(--shadow); }
-    #ai-dialog[hidden] { display:none; }
-    body.tutor-open .app-shell { margin-right:440px; }
-    #ai-context { line-height:1.6; max-height:130px; overflow:auto; }
-    #ai-messages { max-height:42vh; overflow:auto; margin:16px 0; }
-    .ai-settings { margin:16px 0; padding:12px; border:1px solid var(--border); border-radius:12px; }
-    input[type="password"] { width:100%; box-sizing:border-box; padding:10px; margin-top:8px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; }
-    @media(max-width:1200px) { body.tutor-open .app-shell { margin-right:0; } }
-    .ai-message { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.65; padding:14px; margin:10px 0; border:1px solid var(--border); border-radius:12px; }
-    .ai-message.user { background:var(--chip); }
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; }
-    body { min-height: 100vh; }
-    button, input, select, textarea { font: inherit; }
-    .app-shell { display: flex; min-height: 100vh; }
-    .sidebar { width: 310px; background: var(--bg); border-right: 1px solid var(--border); padding: 18px 16px; overflow-y: auto; }
-    .main { flex: 1; padding: 16px 18px 28px; overflow-y: auto; }
-    .panel { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 16px; box-shadow: 0 10px 24px var(--shadow); }
-    .row { display: flex; align-items: center; gap: 10px; }
-    .wrap { flex-wrap: wrap; }
-    .muted { color: var(--muted); }
-    .accent { color: var(--accent); }
-    .badge { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: rgba(255,255,255,0.02); border-radius: 999px; padding: 5px 10px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-    .badge.good { color: var(--good); border-color: rgba(16,185,129,.5); background: rgba(16,185,129,.08); }
-    .badge.bad { color: var(--bad); border-color: rgba(244,63,94,.5); background: rgba(244,63,94,.08); }
-    .badge.marked { color: var(--mark); border-color: rgba(168,85,247,.5); background: rgba(168,85,247,.08); }
-    .chip { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); background: var(--chip); color: var(--text); border-radius: 999px; padding: 7px 12px; font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; user-select: none; }
-    .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
-    input[type="search"], input[type="text"], select, textarea {
-      width: 100%; background: rgba(255,255,255,0.02); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 11px 12px; outline: none;
-    }
-    textarea { resize: vertical; min-height: 90px; }
-    button { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
-    button.primary { background: var(--accent); color: white; border-color: var(--accent); }
-    button.danger { background: var(--bad); color: white; border-color: var(--bad); }
-    .questions { display: grid; gap: 18px; }
-    .question-card { background: var(--card); border: 1px solid var(--border); border-radius: 22px; padding: 22px; box-shadow: 0 12px 22px rgba(0,0,0,0.18); }
-    .question-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-    .question-stem { font-size: 1.03rem; line-height: 1.7; white-space: pre-wrap; margin: 0 0 16px; }
-    .options { display: grid; gap: 10px; }
-    .option { width: 100%; text-align: left; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.015); border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; color: var(--text); }
-    .option.correct { border-color: rgba(16,185,129,0.8); background: rgba(16,185,129,0.08); }
-    .option.wrong { border-color: rgba(244,63,94,0.8); background: rgba(244,63,94,0.08); }
-    .option.selected { box-shadow: 0 0 0 1px var(--accent); }
-    .letter { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.04); border: 1px solid var(--border); font-size: 11px; font-weight: 800; }
-    .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
-    .notes { display: none; margin-top: 14px; }
-    .notes.open { display: block; }
-    .q-image { max-width: 100%; border-radius: 14px; border: 1px solid var(--border); margin-top: 12px; }
-    .empty { border: 1px dashed var(--border); border-radius: 18px; padding: 32px 20px; text-align: center; color: var(--muted); }
-    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-    .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .stat { min-width: 110px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255,255,255,0.02); }
-    .stat strong { display: block; font-size: 1.1rem; }
-    .stat small { display: block; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-    .hidden { display: none !important; }
-    @media (max-width: 900px) {
-      .app-shell { display: block; }
-      .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
-      .main { padding-top: 10px; }
-    }
+    button.primary,button.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+    button.primary:hover { filter:brightness(1.07); }
+    .quiet { border-color:transparent; color:var(--muted); }
+    .muted { color:var(--muted); }
+    .accent { color:var(--accent); }
+    a { color:var(--accent); }
+    input[type="search"],input[type="text"],input[type="password"],select,textarea { width:100%; min-width:0; border:1px solid var(--border); border-radius:10px; padding:12px; background:var(--bg); color:var(--text); font-size:14px; }
+    input::placeholder,textarea::placeholder { color:var(--muted); opacity:.75; }
+    textarea { resize:vertical; min-height:100px; line-height:1.6; }
+    select option { background:var(--card); color:var(--text); }
+    .row { display:flex; align-items:center; gap:10px; }
+    .wrap { flex-wrap:wrap; }
+    .eyebrow { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+    .app-shell { display:flex; min-height:100vh; }
+    .sidebar { position:sticky; top:0; width:258px; flex-shrink:0; height:100dvh; padding:28px 22px; border-right:1px solid var(--border); overflow-y:auto; scrollbar-width:thin; }
+    .brand { display:flex; gap:10px; align-items:center; margin-bottom:32px; font-size:18px; font-weight:650; letter-spacing:-.6px; }
+    .brand-mark { display:grid; place-items:center; height:34px; width:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-size:22px; }
+    .sidebar-section { border-top:1px solid var(--border); margin-top:24px; padding-top:22px; }
+    .sidebar-section h2 { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:0 0 16px; }
+    .sidebar .toolbar { display:flex; gap:8px; margin:12px 0; }
+    .sidebar .toolbar button { flex:1; padding:9px 6px; font-size:12px; }
+    .filter-label { font-size:11px; color:var(--muted); margin:20px 0 9px; }
+    .chip { display:inline-flex; align-items:center; border-radius:7px; padding:6px 9px; font-size:10px; font-weight:550; background:transparent; }
+    .chip.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+    .main { flex:1; min-width:0; max-width:1200px; width:100%; padding:0 44px 60px; margin:auto; margin-top:0; }
+    .topbar { min-height:84px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-bottom:1px solid var(--border); }
+    .breadcrumb { font-size:12px; color:var(--muted); }
+    .breadcrumb span { color:var(--text); margin-left:8px; }
+    .topbar-actions { display:flex; gap:6px; }
+    .mobile-filters { display:none; }
+    .study-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:38px 0 30px; }
+    .study-header h1 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:clamp(30px,3.4vw,48px); line-height:1.12; letter-spacing:-1.7px; margin:12px 0; }
+    .study-header p { color:var(--muted); font-size:13px; line-height:1.7; max-width:410px; margin:0; }
+    .study-symbol { font-family:Georgia,serif; color:var(--accent); font-size:90px; line-height:1; opacity:.8; padding:0 10px; }
+    .workspace-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
+    .stats { display:flex; flex-wrap:wrap; gap:8px; }
+    #stats-bar { gap:24px; }
+    #stats-bar .stat { padding:0; min-width:55px; }
+    .stat strong { font-size:21px; font-weight:550; letter-spacing:-.7px; }
+    .stat small { display:block; color:var(--muted); font-size:10px; margin-top:4px; }
+    #stats-summary { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    #stats-summary .stat { padding:0; }
+    #stats-summary strong { font-size:20px; }
+    #history-list { font-size:12px; line-height:1.7; }
+    #notice { font-size:12px; line-height:1.7; padding:14px 16px; margin-bottom:20px; border:1px solid var(--border); border-radius:12px; background:var(--chip); max-height:170px; overflow:auto; }
+    .questions { display:grid; gap:20px; }
+    .question-card { border:1px solid var(--border); border-radius:18px; background:var(--card); padding:28px; }
+    .question-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:20px; }
+    .question-head > strong { font-size:11px; font-weight:500; }
+    .badge { display:inline-flex; font-size:10px; font-weight:600; padding:4px 8px; border-radius:5px; color:var(--muted); background:var(--chip); }
+    .badge.good { color:var(--good); } .badge.bad { color:var(--bad); } .badge.marked { color:var(--mark); }
+    .question-stem { font-size:16px; line-height:1.85; white-space:pre-wrap; margin:0 0 22px; overflow-wrap:anywhere; }
+    .options { display:grid; gap:9px; }
+    .option { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 15px; border-radius:10px; font-size:13px; line-height:1.65; font-weight:400; }
+    .letter { display:grid; place-items:center; flex-shrink:0; width:26px; height:26px; border:1px solid var(--border); border-radius:7px; font-size:10px; color:var(--muted); }
+    .option.correct { border-color:var(--good); background:color-mix(in srgb,var(--good) 8%,transparent); }
+    .option.wrong { border-color:var(--bad); background:color-mix(in srgb,var(--bad) 8%,transparent); }
+    .option.selected .letter { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+    .actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
+    .question-card > .actions { padding-top:18px; border-top:1px solid var(--border); }
+    .question-card .actions button { font-size:11px; padding:8px 10px; color:var(--muted); border-color:transparent; }
+    .question-card .actions [data-action="explain"] { color:var(--accent); border-color:var(--border); margin-left:auto; }
+    .notes { display:none; margin-top:16px; } .notes.open { display:block; }
+    .q-image { display:block; max-width:100%; max-height:500px; border-radius:10px; margin-top:16px; }
+    .empty { text-align:center; color:var(--muted); padding:50px 20px; border:1px dashed var(--border); border-radius:14px; }
+    #ai-dialog { position:fixed; inset:0 0 0 auto; width:400px; height:100dvh; display:flex; flex-direction:column; border-left:1px solid var(--border); background:var(--card); z-index:20; box-shadow:-12px 0 50px var(--shadow); }
+    body.tutor-open .app-shell { margin-right:400px; }
+    .tutor-header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:20px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .tutor-identity { display:flex; align-items:center; gap:10px; min-width:0; }
+    .tutor-identity .brand-mark { width:32px; height:32px; font-size:18px; background:var(--chip); color:var(--accent); }
+    #ai-title { margin:0; font-size:15px; font-weight:600; }
+    #ai-active-connection { font-size:10px; color:var(--muted); margin:4px 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
+    .tutor-controls { display:flex; gap:3px; }
+    .icon-button { display:grid; place-items:center; width:30px; height:30px; padding:0; border:0; color:var(--muted); font-size:18px; }
+    .context-preview { margin:14px 20px 0; padding:11px 12px; background:var(--bg); border:1px solid var(--border); border-radius:10px; flex-shrink:0; }
+    .context-preview summary { cursor:pointer; font-size:11px; color:var(--muted); }
+    #ai-context { font-size:12px; line-height:1.7; max-height:130px; overflow:auto; margin:10px 0 0; white-space:pre-wrap; }
+    .chat-scroll { min-height:0; flex:1; overflow:auto; padding:20px; overscroll-behavior:contain; }
+    .tutor-welcome { text-align:center; padding:42px 8px 22px; }
+    .tutor-welcome .spark { font-size:32px; color:var(--accent); }
+    .tutor-welcome h3 { font-family:Georgia,serif; font-size:24px; font-weight:400; letter-spacing:-.6px; margin:16px 0 10px; }
+    .tutor-welcome p { color:var(--muted); font-size:12px; line-height:1.8; margin:0 auto; max-width:240px; }
+    .suggestions { display:flex; flex-direction:column; gap:8px; margin:20px 0 0; }
+    .ai-suggestion { text-align:left; font-size:12px; background:var(--bg); }
+    #ai-messages { display:flex; flex-direction:column; gap:18px; }
+    .ai-message { font-size:13px; line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .ai-message::before { display:block; font-size:9px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; }
+    .ai-message.assistant::before { content:'VAULT TUTOR'; color:var(--accent); }
+    .ai-message.user { background:var(--chip); border-radius:12px 12px 3px 12px; padding:12px 14px; margin-left:24px; }
+    .ai-message.error { color:var(--bad); padding:12px; border:1px solid var(--border); border-radius:10px; }
+    #ai-form { flex-shrink:0; padding:16px 20px 12px; border-top:1px solid var(--border); }
+    #ai-form label { display:block; font-size:11px; color:var(--muted); margin-bottom:8px; }
+    #ai-question { min-height:84px; max-height:160px; font-size:12px; resize:none; }
+    #ai-form .actions { margin-top:9px; justify-content:flex-end; }
+    #ai-send { padding:8px 16px; font-size:12px; }
+    .tutor-footnote { color:var(--muted); font-size:9px; text-align:center; margin:12px 0 0; }
+    .ai-settings { width:min(490px,calc(100% - 32px)); max-height:calc(100dvh - 32px); padding:28px; border:1px solid var(--border); border-radius:20px; background:var(--card); color:var(--text); box-shadow:0 30px 100px #0006; overflow:auto; }
+    .ai-settings::backdrop { background:#07110ccc; backdrop-filter:blur(5px); }
+    body.settings-open { overflow:hidden; }
+    .settings-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+    .settings-heading h2 { font-family:Georgia,serif; font-size:28px; font-weight:400; margin:6px 0 10px; letter-spacing:-.6px; }
+    .settings-intro { color:var(--muted); font-size:12px; line-height:1.8; margin:0 0 22px; }
+    #ai-settings-form label { display:block; font-size:12px; font-weight:600; margin:18px 0 8px; }
+    #ai-settings-form .actions { margin-top:22px; }
+    #ai-settings-form button[type="submit"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+    #ai-model-help { color:var(--muted); font-size:11px; line-height:1.7; }
+    #ai-refresh-models { margin-top:10px; font-size:11px; }
+    #ai-connection-status { border-top:1px solid var(--border); padding-top:16px; margin:20px 0 0; color:var(--muted); font-size:11px; line-height:1.7; }
+    @media(min-width:1101px) { body.tutor-open .main { padding-left:28px; padding-right:28px; } body.tutor-open .study-symbol { display:none; } }
+    @media(max-width:1100px) { body.tutor-open .app-shell { margin-right:0; } .main { padding:0 26px 40px; } .sidebar { width:230px; padding:24px 16px; } }
+    @media(max-width:760px) { .sidebar { display:none; position:fixed; top:65px; left:0; width:280px; height:calc(100dvh - 65px); z-index:15; background:var(--card); box-shadow:15px 0 40px var(--shadow); } body.filters-open .sidebar { display:block; } .mobile-filters { display:block; } .main { padding:0 18px 30px; } .topbar { min-height:65px; } .breadcrumb { display:none; } .study-header { padding:26px 0; } .study-header h1 { font-size:36px; } .study-symbol { display:none; } .question-card { padding:20px 16px; } .question-stem { font-size:15px; } .question-card .actions [data-action="explain"] { margin-left:0; } #ai-dialog { width:min(400px,100%); } .workspace-bar > button { font-size:11px; } }
+    @media(prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
   </style>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="panel" style="margin-bottom:14px;">
-        <div class="row wrap" style="justify-content:space-between; margin-bottom: 12px;">
-          <strong style="font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent);">UPSC Vault</strong>
-          <button id="theme-toggle" type="button" aria-label="Toggle theme">Theme</button>
-        </div>
-        <div class="toolbar">
-          <button id="sample-load" class="primary">Load Demo</button>
-          <button id="csv-import" type="button">Import CSV</button>
-          <input id="csv-upload" class="hidden" type="file" accept=".csv" />
-        </div>
-      </div>
-
-      <div class="panel" style="margin-bottom:14px;">
-        <div class="muted" style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:10px;">Filters</div>
-        <input id="search-input" type="search" placeholder="Search questions..." aria-label="Search questions" />
-        <div class="toolbar" style="margin-top:12px;">
-          <button id="marked-filter" type="button">Marked</button>
-          <button id="notes-filter" type="button">Notes</button>
-        </div>
-        <div id="year-chips" class="row wrap" style="gap:8px; margin-top:12px;"></div>
-        <div id="subject-chips" class="row wrap" style="gap:8px; margin-top:12px;"></div>
-        <button id="reset-filters" type="button" style="margin-top:12px; width:100%;">Reset Filters</button>
-      </div>
-
-      <div class="panel" style="margin-bottom:14px;">
-        <div class="muted" style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px;">Progress</div>
-        <div id="stats-summary" class="stats"></div>
-      </div>
-
-      <div class="panel">
-        <div class="muted" style="font-size:11px; letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px;">Attempt History</div>
-        <div id="history-list"></div>
-      </div>
+    <aside class="sidebar" aria-label="Question filters and progress">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span>UPSC Vault</div>
+      <span class="eyebrow">Your question library</span>
+      <div class="toolbar"><button id="sample-load" type="button">Load demo</button><button id="csv-import" type="button" class="primary">Import CSV</button><input id="csv-upload" class="hidden" type="file" accept=".csv" /></div>
+      <section class="sidebar-section"><h2>Find your focus</h2>
+        <input id="search-input" type="search" placeholder="Search questions…" aria-label="Search questions" />
+        <div class="toolbar"><button id="marked-filter" type="button">Marked</button><button id="notes-filter" type="button">With notes</button></div>
+        <p class="filter-label">YEAR</p><div id="year-chips" class="row wrap" style="gap:6px"></div>
+        <p class="filter-label">SUBJECT</p><div id="subject-chips" class="row wrap" style="gap:6px"></div>
+        <button id="reset-filters" type="button" class="quiet" style="margin-top:12px;padding-left:0">Reset filters</button>
+      </section>
+      <section class="sidebar-section"><h2>Your progress</h2><div id="stats-summary" class="stats"></div></section>
+      <section class="sidebar-section"><h2>Recent practice</h2><div id="history-list"></div></section>
     </aside>
-
     <main class="main">
-      <header class="study-header"><div><span class="badge">Your daily practice space</span><h1>Build understanding. Keep progressing.</h1><p class="muted">Practice previous questions, capture notes, and explore the reasoning with your AI tutor.</p></div></header>
+      <nav class="topbar" aria-label="Workspace controls"><div class="breadcrumb">Workspace / <span>Prelims practice</span></div>
+        <button id="filters-toggle" class="mobile-filters" aria-expanded="false" aria-label="Toggle question filters">☰ Filters</button>
+        <div class="topbar-actions"><button id="theme-toggle" class="quiet" aria-label="Toggle theme">◐ Theme</button><button class="ai-settings-open" type="button">⚙︎ AI settings</button></div>
+      </nav>
+      <header class="study-header"><div><span class="eyebrow">One question. A deeper understanding.</span><h1>Make room for<br>your next breakthrough.</h1><p>A focused space for previous-year questions, thoughtful revision, and a little help when you need it.</p></div><div class="study-symbol" aria-hidden="true">✳</div></header>
       <div id="notice" role="status" class="hidden"></div>
-      <div class="row wrap" style="justify-content:space-between"><div id="stats-bar" class="stats"></div><button id="save-session">Save practice result</button></div>
+      <div class="workspace-bar"><div id="stats-bar" class="stats"></div><button id="save-session">Save practice result</button></div>
       <div id="questions" class="questions"></div>
     </main>
   </div>
-
   <aside id="ai-dialog" role="complementary" aria-labelledby="ai-title" hidden>
-    <div class="row" style="justify-content:space-between"><h2 id="ai-title">AI study tutor</h2><button id="ai-close" aria-label="Close AI tutor">Close</button></div>
-    <p id="ai-context" class="muted"></p>
-    <p class="muted">AI explanations can contain mistakes. Check important facts against your study sources.</p>
-    <details class="ai-settings"><summary>AI connection settings</summary>
-      <p class="muted">Choose DeepSeek, OpenRouter, or OpenAI. Session keys stay in memory and are sent only to the selected provider. Refreshing clears all keys.</p>
+    <header class="tutor-header"><div class="tutor-identity"><span class="brand-mark" aria-hidden="true">✦</span><div><h2 id="ai-title">Study companion</h2><p id="ai-active-connection">Server connection</p></div></div><div class="tutor-controls"><button id="ai-new-chat" class="icon-button" title="New conversation" aria-label="New conversation">＋</button><button class="ai-settings-open icon-button" title="AI settings" aria-label="Open AI settings">⚙︎</button><button id="ai-close" class="icon-button" title="Close tutor" aria-label="Close AI tutor">×</button></div></header>
+    <details class="context-preview"><summary>Current question</summary><p id="ai-context"></p></details>
+    <div class="chat-scroll"><div id="ai-welcome" class="tutor-welcome"><span class="spark" aria-hidden="true">✦</span><h3>Let's make it click.</h3><p>Explore the reasoning, untangle an option, or ask the next question.</p><div class="suggestions"><button class="ai-suggestion" type="button">Give me a hint</button><button class="ai-suggestion" type="button">Explain the other options</button></div></div><div id="ai-messages" role="log" aria-live="polite"></div></div>
+    <form id="ai-form"><label for="ai-question">Ask a question or follow up</label><textarea id="ai-question" maxlength="2000" placeholder="What would you like to understand?" required></textarea><div class="actions"><button id="ai-cancel" type="button" hidden>Stop</button><button id="ai-send" class="primary" type="submit">Ask tutor</button></div><p class="tutor-footnote">AI can make mistakes. Verify important facts.</p></form>
+  </aside>
+  <dialog id="ai-settings-dialog" class="ai-settings" aria-labelledby="ai-settings-title">
+    <div class="settings-heading"><div><span class="eyebrow">Make it your own</span><h2 id="ai-settings-title">AI connection</h2></div><button id="ai-settings-close" class="icon-button" aria-label="Close AI settings">×</button></div>
+    <p class="settings-intro">Choose your provider and model. Keys stay in this tab and clear when you refresh.</p>
       <form id="ai-settings-form"><label for="ai-provider">Provider</label><select id="ai-provider"><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="openrouter">OpenRouter · free models</option></select>
       <label id="ai-key-label" for="ai-key">OpenAI API key</label><input id="ai-key" type="password" autocomplete="off" placeholder="Paste your key for this session" />
       <label for="ai-model">Model</label><select id="ai-model"><option value="gpt-4o-mini">GPT-4o mini</option><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option></select>
       <button id="ai-refresh-models" type="button" hidden>Refresh free models</button><p id="ai-model-help" class="muted"></p>
       <div class="actions"><button type="submit">Connect key</button><button id="ai-key-clear" type="button">Use server</button></div></form>
       <p id="ai-connection-status" role="status">Using server configuration. No browser key connected.</p>
-    </details>
-    <div class="actions"><button id="ai-new-chat" type="button">New conversation</button><button class="ai-suggestion" type="button">Give me a hint</button><button class="ai-suggestion" type="button">Explain the other options</button></div>
-    <div id="ai-messages" role="log" aria-live="polite"></div>
-    <form id="ai-form"><label for="ai-question">Ask a question or follow up</label><textarea id="ai-question" maxlength="2000" placeholder="Explain why this answer is correct and how to eliminate the other options." required></textarea><div class="actions"><button id="ai-send" class="primary" type="submit">Ask tutor</button><button id="ai-cancel" type="button" hidden>Cancel</button></div></form>
-  </aside>
+
+    <div class="actions" style="justify-content:flex-end"><button id="ai-settings-done" type="button">Done</button></div>
+  </dialog>
   <script>
     const STORAGE_KEYS = {
       bank: 'uv_bank_v2',
@@ -657,7 +678,9 @@
     const tutorChats = new Map();
     function addTutorMessage(role, text) {
       const node = document.createElement('div'); node.className = `ai-message ${role}`;
-      node.textContent = text; document.getElementById('ai-messages').append(node); node.scrollIntoView({block:'nearest'});
+      node.textContent = text; document.getElementById('ai-messages').append(node);
+      document.getElementById('ai-welcome').hidden = true;
+      const scroll = document.querySelector('.chat-scroll'); scroll.scrollTop = scroll.scrollHeight;
     }
     function openTutor(id) {
       const next = allQuestions.find(q => q.id === id); if (!next) return;
@@ -665,11 +688,12 @@
       tutorQuestion = next;
       tutorMessages = tutorChats.get(id) || []; tutorChats.set(id, tutorMessages);
       document.getElementById('ai-messages').replaceChildren();
+      document.getElementById('ai-welcome').hidden = tutorMessages.length > 0;
       tutorMessages.forEach(m => addTutorMessage(m.role, m.content));
       document.getElementById('ai-context').textContent = tutorQuestion.question;
       document.getElementById('ai-question').value = tutorMessages.length ? '' : 'Explain the correct answer and why the other options are incorrect.';
       document.getElementById('ai-dialog').hidden = false; document.body.classList.add('tutor-open');
-      document.getElementById('ai-question').focus();
+      document.getElementById('ai-question').focus({preventScroll:true});
     }
     let modelLoad = 0;
     async function updateProviderModels() {
@@ -712,24 +736,35 @@
       }
       if (load !== modelLoad) return;
       if ([...modelSelect.options].some(o => o.value === providerModels[provider])) modelSelect.value = providerModels[provider];
-      sessionModel = modelSelect.value;
+      sessionModel = modelSelect.value; updateConnectionLabel();
     }
 
+    function updateConnectionLabel() {
+      document.getElementById('ai-active-connection').textContent = sessionKey ? `${providers[sessionProvider].name} · ${sessionModel}` : 'Server connection';
+    }
     function bindTutor() {
       const panel = document.getElementById('ai-dialog');
+      const settings = document.getElementById('ai-settings-dialog');
+      document.querySelectorAll('.ai-settings-open').forEach(button => button.onclick = () => { settings.showModal(); document.body.classList.add('settings-open'); });
+      document.getElementById('ai-settings-close').onclick = () => settings.close();
+      document.getElementById('ai-settings-done').onclick = () => settings.close();
+      settings.addEventListener('close', () => { document.body.classList.remove('settings-open'); document.getElementById('ai-key').value = ''; updateConnectionLabel(); });
+      settings.addEventListener('click', event => { if (event.target === settings) { const rect = settings.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) settings.close(); } });
+      document.getElementById('filters-toggle').onclick = event => { const open = document.body.classList.toggle('filters-open'); event.currentTarget.setAttribute('aria-expanded', String(open)); };
+
       document.getElementById('ai-close').onclick = () => { panel.hidden = true; document.body.classList.remove('tutor-open'); tutorRequest?.abort(); };
       document.getElementById('ai-cancel').onclick = () => tutorRequest?.abort();
       document.getElementById('ai-provider').onchange = () => updateProviderModels();
       document.getElementById('ai-refresh-models').onclick = () => updateProviderModels();
-      document.getElementById('ai-model').onchange = () => { sessionModel = document.getElementById('ai-model').value; providerModels[sessionProvider] = sessionModel; };
+      document.getElementById('ai-model').onchange = () => { sessionModel = document.getElementById('ai-model').value; providerModels[sessionProvider] = sessionModel; updateConnectionLabel(); };
       document.getElementById('ai-settings-form').onsubmit = event => {
         event.preventDefault(); const field = document.getElementById('ai-key');
         if (!field.value.trim()) { document.getElementById('ai-connection-status').textContent = 'Paste a key first, or choose Use server.'; return; }
         sessionKey = field.value.trim(); providerKeys[sessionProvider] = sessionKey; sessionModel = document.getElementById('ai-model').value.trim() || 'gpt-4o-mini'; field.value = '';
-        document.getElementById('ai-connection-status').textContent = `${providers[sessionProvider].name} session key connected. It will be checked when you ask the tutor.`;
+        document.getElementById('ai-connection-status').textContent = `${providers[sessionProvider].name} session key connected. It will be checked when you ask the tutor.`; updateConnectionLabel();
       };
-      document.getElementById('ai-key-clear').onclick = () => { sessionKey = ''; delete providerKeys[sessionProvider]; document.getElementById('ai-key').value = ''; document.getElementById('ai-connection-status').textContent = 'Using server configuration. No browser key connected.'; };
-      document.getElementById('ai-new-chat').onclick = () => { tutorRequest?.abort(); tutorMessages = []; tutorChats.set(tutorQuestion.id, tutorMessages); document.getElementById('ai-messages').replaceChildren(); document.getElementById('ai-question').value = ''; };
+      document.getElementById('ai-key-clear').onclick = () => { sessionKey = ''; delete providerKeys[sessionProvider]; document.getElementById('ai-key').value = ''; document.getElementById('ai-connection-status').textContent = 'Using server configuration. No browser key connected.'; updateConnectionLabel(); };
+      document.getElementById('ai-new-chat').onclick = () => { tutorRequest?.abort(); tutorMessages = []; tutorChats.set(tutorQuestion.id, tutorMessages); document.getElementById('ai-messages').replaceChildren(); document.getElementById('ai-welcome').hidden = false; document.getElementById('ai-question').value = ''; };
       document.querySelectorAll('.ai-suggestion').forEach(btn => btn.onclick = () => { document.getElementById('ai-question').value = btn.textContent; document.getElementById('ai-question').focus(); });
       document.getElementById('ai-form').addEventListener('submit', async event => {
         event.preventDefault(); if (tutorRequest) return;

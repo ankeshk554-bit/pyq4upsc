@@ -73,9 +73,10 @@ with sync_playwright() as p:
  assert not errors,errors
  page.locator('[data-action="explain"]').click()
  assert page.locator('.ai-message.assistant').count()==2
- page.locator('.ai-settings summary').click()
+ page.locator('#ai-dialog .ai-settings-open').click()
  page.locator('#ai-key').fill('test-session-key'); page.locator('#ai-settings-form button[type="submit"]').click()
  assert page.locator('#ai-key').input_value()==''
+ page.locator('#ai-settings-done').click()
  direct_requests=[]
  def direct_reply(route):
   direct_requests.append(route.request)
@@ -85,6 +86,7 @@ with sync_playwright() as p:
  page.wait_for_function('document.querySelectorAll(".ai-message.assistant").length === 3')
  assert direct_requests[0].headers['authorization']=='Bearer test-session-key'
  assert 'test-session-key' not in page.evaluate('JSON.stringify(localStorage) + JSON.stringify(sessionStorage)')
+ page.locator('#ai-dialog .ai-settings-open').click()
  page.locator('#ai-key-clear').click()
  assert 'No browser key' in page.locator('#ai-connection-status').inner_text()
  print('PASS mobile overflow, retained follow-ups, session key direct routing and no key storage; no page errors')
