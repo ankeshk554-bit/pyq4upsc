@@ -1,9 +1,11 @@
 """Responsive layout and settings modal checks; no provider requests."""
 import os
 from playwright.sync_api import sync_playwright
+from fixtures import seed_bank
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width':1440, 'height':1000})
+    seed_bank(page)
     page.goto(os.environ.get('TEST_URL', 'http://127.0.0.1:8000'))
     page.locator('[data-action="explain"]').first.click()
     assert page.locator('.question-card').first.bounding_box()['x'] + page.locator('.question-card').first.bounding_box()['width'] <= page.locator('#ai-dialog').bounding_box()['x']
@@ -20,7 +22,7 @@ with sync_playwright() as p:
     assert page.locator('#ai-settings-dialog').bounding_box()['width'] <= 390
     page.locator('#ai-key').fill('unsubmitted-test-key')
     page.keyboard.press('Escape')
-    assert page.locator('#ai-key').input_value() == ''
+    page.wait_for_function('document.querySelector("#ai-key").value === ""')
     page.locator('#ai-close').click()
     page.locator('#filters-toggle').click()
     assert page.locator('#search-input').is_visible()

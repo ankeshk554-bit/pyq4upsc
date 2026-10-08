@@ -43,3 +43,13 @@ With Playwright and system Chromium installed, start the server and run `python3
 The redesigned workspace uses a collapsible mobile filter drawer, a right-side tutor with a fixed composer, and a separate modal for provider/model/key configuration. Escape closes settings and returns focus to its opener. The tutor’s current-question reference is collapsible, and suggestion prompts hide when a conversation begins.
 
 Run `python3 tests/formatting_smoke.py` against the development server to check tutor formatting, mobile overflow, retained conversations, and inert HTML handling.
+
+## Focused practice
+
+New browsers start with an import screen; there is no demo loader or automatic sample bank. Existing saved questions and progress are retained. Banks display 20 questions per page; changing filters starts at the first page. Use **Unanswered** to work through new questions or **Review mistakes** to revisit incorrect answers. View results refresh when you change filters; the current question stays visible after answering so you can review its feedback.
+
+An answer locks after selection. **Try again** clears that question's current answer and reveal state while retaining notes and bookmarks. Accuracy reflects current graded answers, while saved practice results remain snapshots. Questions without an answer key stay ungraded.
+
+Use **Save to question notes** below a tutor reply to append it to your existing notes. The text is labeled as an AI explanation and can be edited. **Give me a hint** instructs the model to offer a clue without revealing the answer; actual model compliance may vary.
+
+Run `python3 tests/learning_smoke.py` to check the import-first experience, pagination, revision views, retries, and saved explanations. Browser regression fixtures live only in `tests/fixtures.py`.

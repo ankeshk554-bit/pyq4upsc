@@ -1,6 +1,7 @@
 """Check readable tutor formatting and inert model-supplied HTML."""
 import os
 from playwright.sync_api import sync_playwright
+from fixtures import seed_bank
 REPLY = '''# Alternative Investment Funds (AIFs) — Analysis
 
 ## What are AIFs?
@@ -33,6 +34,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page(viewport={'width':390, 'height':844})
     page.route('**/api/explain', lambda route: route.fulfill(json={'reply':REPLY}))
+    seed_bank(page)
     page.goto(os.environ.get('TEST_URL', 'http://127.0.0.1:8000'))
     page.locator('[data-action="explain"]').first.click()
     page.locator('#ai-send').click()

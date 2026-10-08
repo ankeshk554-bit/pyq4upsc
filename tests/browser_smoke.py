@@ -1,8 +1,10 @@
 import os
 from playwright.sync_api import sync_playwright
+from fixtures import seed_bank
 with sync_playwright() as p:
  b=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
  page=b.new_page(); errors=[]; page.on('pageerror',lambda e:errors.append(str(e)))
+ seed_bank(page)
  page.goto(os.environ.get('TEST_URL', 'http://127.0.0.1:8000'),wait_until='networkidle')
  assert page.locator('.question-card').count()==10
  page.locator('[data-action="reveal"][data-qid="demo-q-1"]').click()
