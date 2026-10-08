@@ -61,6 +61,21 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn('Provided answer key: unavailable', json.loads(provider.call_args.args[0].data)['messages'][0]['content'])
 
+    def test_provider_routing(self):
+        for provider, key_name, endpoint, model in (
+            ('deepseek', 'DEEPSEEK_API_KEY', 'https://api.deepseek.com/chat/completions', 'deepseek-chat'),
+            ('openrouter', 'OPENROUTER_API_KEY', 'https://openrouter.ai/api/v1/chat/completions', 'openrouter/free'),
+        ):
+            with self.subTest(provider=provider):
+                reply = io.BytesIO(json.dumps({'choices':[{'message':{'content':'Study explanation.'}}]}).encode())
+                with patch.dict(server.os.environ, {'AI_PROVIDER':provider, key_name:'provider-test-key'}), patch.object(server, 'urlopen', return_value=reply) as call:
+                    status, body = self.request(self.payload())
+                self.assertEqual(status, 200)
+                request = call.call_args.args[0]
+                self.assertEqual(request.full_url, endpoint)
+                self.assertEqual(request.get_header('Authorization'), 'Bearer provider-test-key')
+                self.assertEqual(json.loads(request.data)['model'], model)
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:

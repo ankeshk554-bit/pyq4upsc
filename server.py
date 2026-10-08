@@ -61,7 +61,16 @@ class Handler(SimpleHTTPRequestHandler):
             if messages[-1]['role'] != 'user': raise ValueError('A study question is required.')
         except (ValueError, TypeError, json.JSONDecodeError):
             self.respond(400, {'error': 'Invalid request. Check the question and start a new conversation if it is too long.'}); return
-        key = os.environ.get('AI_API_KEY') or os.environ.get('OPENAI_API_KEY')
+        provider = os.environ.get('AI_PROVIDER', 'openai').lower()
+        providers = {
+            'openai': ('https://api.openai.com/v1/chat/completions', 'OPENAI_API_KEY', 'gpt-4o-mini'),
+            'deepseek': ('https://api.deepseek.com/chat/completions', 'DEEPSEEK_API_KEY', 'deepseek-chat'),
+            'openrouter': ('https://openrouter.ai/api/v1/chat/completions', 'OPENROUTER_API_KEY', 'openrouter/free'),
+        }
+        if provider not in providers:
+            self.respond(503, {'error':'Unsupported AI_PROVIDER. Use openai, deepseek, or openrouter.'}); return
+        endpoint, key_name, default_model = providers[provider]
+        key = os.environ.get(key_name) or os.environ.get('AI_API_KEY')
         if not key:
             self.respond(503, {'error': 'AI tutor is not connected yet. Configure the server’s AI_API_KEY to enable explanations. Your practice and notes still work.'}); return
         prompt = (
@@ -73,13 +82,13 @@ class Handler(SimpleHTTPRequestHandler):
             'State uncertainty and do not invent citations. Use plain text.\n'
             f'Subject: {subject}\nQuestion: {question}\nProvided answer key: {answer.upper() or 'unavailable'}'
         )
-        payload = json.dumps({'model': os.environ.get('AI_MODEL', 'gpt-4o-mini'),
+        payload = json.dumps({'model': os.environ.get('AI_MODEL', default_model),
             'messages': [{'role':'system', 'content':prompt}] + [{'role':m['role'], 'content':m['content']} for m in messages],
-            'max_tokens': 1000}).encode()
-        request = Request('https://api.openai.com/v1/chat/completions', data=payload,
+            'max_tokens': 8000 if os.environ.get('AI_MODEL', default_model) == 'deepseek-reasoner' else 2000}).encode()
+        request = Request(endpoint, data=payload,
             headers={'Authorization': f'Bearer {key}', 'Content-Type':'application/json'})
         try:
-            with urlopen(request, timeout=35) as response:
+            with urlopen(request, timeout=75) as response:
                 result = json.load(response)
             reply = result['choices'][0]['message']['content']
             if not isinstance(reply, str) or not reply.strip(): raise ValueError('Empty provider response')
