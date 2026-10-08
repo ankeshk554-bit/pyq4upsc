@@ -53,6 +53,14 @@ class TutorTests(unittest.TestCase):
         self.assertIn('Provided answer key: B', payload['messages'][0]['content'])
         self.assertEqual(payload['messages'][-1]['content'], 'Explain')
 
+    def test_unknown_answer_can_be_explained(self):
+        data = self.payload(); data['answer'] = ''
+        reply = io.BytesIO(json.dumps({'choices':[{'message':{'content':'No answer key was supplied.'}}]}).encode())
+        with patch.dict(server.os.environ, {'AI_API_KEY':'test-only-key'}), patch.object(server, 'urlopen', return_value=reply) as provider:
+            status, body = self.request(data)
+        self.assertEqual(status, 200)
+        self.assertIn('Provided answer key: unavailable', json.loads(provider.call_args.args[0].data)['messages'][0]['content'])
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:

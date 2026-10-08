@@ -33,8 +33,19 @@ with sync_playwright() as p:
  assert 'Which, article?' in page.locator('.question-stem').inner_text()
  page.locator('#csv-upload').set_input_files({'name':'invalid.csv','mimeType':'text/csv','buffer':b'Question,Official Answer Key\nInvalid,z\n'})
  assert page.locator('.question-card').count()==1
- assert 'Invalid' in page.locator('#notice').inner_text()
+ assert 'unrecognized answer' in page.locator('#notice').inner_text()
  print('PASS multiline CSV and invalid import preserves bank')
+ page.locator('#csv-upload').set_input_files({'name':'keys.csv','mimeType':'text/csv','buffer':b'Question,Subject,Year,Official Answer Key\n"Unknown? (a) One (b) Two",Polity,2024,X\n"Known? (a) One (b) Two",Polity,2024,Option B\n'})
+ assert page.locator('.question-card').count()==2
+ page.locator('.question-card').first.locator('[data-choice="a"]').click()
+ assert 'not graded' in page.locator('.question-card').first.inner_text().lower()
+ assert '0%' in page.locator('#stats-summary').inner_text()
+ page.locator('[data-action="explain"]').first.click()
+ assert page.locator('#ai-dialog').evaluate('(e)=>e.getBoundingClientRect().right')==page.viewport_size['width']
+ page.locator('#ai-close').click()
+ page.locator('#csv-upload').set_input_files({'name':'valid.csv','mimeType':'text/csv','buffer':b'Question,Subject,Year,Official Answer Key\n"Which, article? (a) 15 (b) 17",Polity,2025,(b)\n'})
+ page.wait_for_function('document.querySelectorAll(".question-card").length===1')
+ print('PASS X answer imports without grading; tutor docks at right edge')
  page.locator('[data-action="explain"]').click(); page.locator('#ai-send').click()
  page.locator('.ai-message.error').wait_for()
  assert 'not connected' in page.locator('.ai-message.error').inner_text()
@@ -60,5 +71,21 @@ with sync_playwright() as p:
  page.set_viewport_size({'width':1440,'height':900})
  page.screenshot(path='/tmp/upsc-desktop.png',full_page=True)
  assert not errors,errors
- print('PASS mobile overflow and no page errors')
+ page.locator('[data-action="explain"]').click()
+ assert page.locator('.ai-message.assistant').count()==2
+ page.locator('.ai-settings summary').click()
+ page.locator('#ai-key').fill('test-session-key'); page.locator('#ai-settings-form button[type="submit"]').click()
+ assert page.locator('#ai-key').input_value()==''
+ direct_requests=[]
+ def direct_reply(route):
+  direct_requests.append(route.request)
+  route.fulfill(json={'choices':[{'message':{'content':'Follow-up answer from session key.'}}]})
+ page.route('https://api.openai.com/v1/chat/completions',direct_reply)
+ page.locator('#ai-question').fill('Explain Article 15'); page.locator('#ai-send').click()
+ page.wait_for_function('document.querySelectorAll(".ai-message.assistant").length === 3')
+ assert direct_requests[0].headers['authorization']=='Bearer test-session-key'
+ assert 'test-session-key' not in page.evaluate('JSON.stringify(localStorage) + JSON.stringify(sessionStorage)')
+ page.locator('#ai-key-clear').click()
+ assert 'No browser key' in page.locator('#ai-connection-status').inner_text()
+ print('PASS mobile overflow, retained follow-ups, session key direct routing and no key storage; no page errors')
  b.close()
