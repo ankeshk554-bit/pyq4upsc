@@ -2,11 +2,9 @@
 <html lang="en" data-theme="amoled">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>UPSC Vault</title>
-  <script defer src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <style>
     :root {
       --bg: #000;
@@ -21,6 +19,26 @@
       --chip: #111827;
       --shadow: rgba(0,0,0,0.35);
     }
+    html[data-theme="nord"] { --bg:#202b3b; --card:#293548; --text:#eceff4; --muted:#b7c3d4; --border:#46566c; --accent:#88c0d0; --chip:#354359; }
+    html[data-theme="solarized"] { --bg:#002b36; --card:#073642; --text:#eee8d5; --muted:#93a1a1; --border:#31515a; --accent:#2aa198; --chip:#16434c; }
+    html[data-theme="white"] { --bg:#f3f6fb; --card:#fff; --text:#192435; --muted:#53657c; --border:#ccd6e4; --accent:#2563eb; --chip:#e9eff7; --shadow:rgba(30,50,80,.06); }
+    html[data-theme="paper"] { --bg:#f5f0e5; --card:#fffcf4; --text:#39342b; --muted:#766c5a; --border:#d9cfbb; --accent:#976332; --chip:#ebe3d3; --shadow:rgba(80,60,20,.06); }
+    :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+    button:hover { border-color:var(--accent); }
+    button:disabled { opacity:.65; cursor:wait; }
+    button.active { background:var(--accent); color:var(--bg); }
+    .main { min-width:0; max-width:1100px; margin:0 auto; width:100%; }
+    .sidebar { flex-shrink:0; }
+    .letter { flex-shrink:0; }
+    .study-header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; }
+    .study-header h1 { margin:0 0 8px; font-size:clamp(24px,4vw,34px); }
+    #notice { margin-bottom:16px; padding:12px; border:1px solid var(--border); border-radius:12px; }
+    dialog { width:min(640px,calc(100% - 24px)); max-height:85vh; border:1px solid var(--border); border-radius:20px; background:var(--card); color:var(--text); padding:24px; }
+    dialog::backdrop { background:rgba(0,0,0,.65); }
+    #ai-context { line-height:1.6; }
+    #ai-messages { max-height:38vh; overflow:auto; margin:16px 0; }
+    .ai-message { white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.65; padding:14px; margin:10px 0; border:1px solid var(--border); border-radius:12px; }
+    .ai-message.user { background:var(--chip); }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: Inter, sans-serif; }
     body { min-height: 100vh; }
@@ -113,11 +131,20 @@
     </aside>
 
     <main class="main">
-      <div id="stats-bar" class="stats"></div>
+      <header class="study-header"><div><span class="badge">Your daily practice space</span><h1>Build understanding. Keep progressing.</h1><p class="muted">Practice previous questions, capture notes, and explore the reasoning with your AI tutor.</p></div></header>
+      <div id="notice" role="status" class="hidden"></div>
+      <div class="row wrap" style="justify-content:space-between"><div id="stats-bar" class="stats"></div><button id="save-session">Save practice result</button></div>
       <div id="questions" class="questions"></div>
     </main>
   </div>
 
+  <dialog id="ai-dialog" aria-labelledby="ai-title">
+    <div class="row" style="justify-content:space-between"><h2 id="ai-title">AI study tutor</h2><button id="ai-close" aria-label="Close AI tutor">Close</button></div>
+    <p id="ai-context" class="muted"></p>
+    <p class="muted">AI explanations can contain mistakes. Check important facts against your study sources.</p>
+    <div id="ai-messages" role="log" aria-live="polite"></div>
+    <form id="ai-form"><label for="ai-question">Ask about this question</label><textarea id="ai-question" maxlength="2000" placeholder="Explain why this answer is correct and how to eliminate the other options." required></textarea><div class="actions"><button id="ai-send" class="primary" type="submit">Ask tutor</button><button id="ai-cancel" type="button" hidden>Cancel</button></div></form>
+  </dialog>
   <script>
     const STORAGE_KEYS = {
       bank: 'uv_bank_v2',
@@ -154,7 +181,7 @@
       try { return localStorage.getItem(key); } catch { return null; }
     }
     function safeSet(key, value) {
-      try { localStorage.setItem(key, value); return true; } catch { return false; }
+      try { localStorage.setItem(key, value); return true; } catch { notify('Your browser could not save changes. Export or copy important notes before leaving.'); return false; }
     }
 
     function escapeHtml(s = '') {
@@ -195,7 +222,7 @@
         return;
       }
       try {
-        const parsed = JSON.parse(raw) || [];
+        const parsed = JSON.parse(raw); if (!Array.isArray(parsed)) throw new Error('Invalid bank');
         allQuestions = parsed.map(normalizeQuestion);
       } catch {
         allQuestions = SAMPLE_QUESTIONS.map(normalizeQuestion);
@@ -203,11 +230,11 @@
     }
 
     function loadProgress() {
-      try { progress = JSON.parse(safeGet(STORAGE_KEYS.progress) || '{}'); } catch { progress = {}; }
+      try { progress = JSON.parse(safeGet(STORAGE_KEYS.progress) || '{}'); if (!progress || Array.isArray(progress) || typeof progress !== 'object') progress = {}; } catch { progress = {}; }
     }
 
     function loadHistory() {
-      try { history = JSON.parse(safeGet(STORAGE_KEYS.history) || '[]'); } catch { history = []; }
+      try { history = JSON.parse(safeGet(STORAGE_KEYS.history) || '[]'); if (!Array.isArray(history)) history = []; } catch { history = []; }
     }
 
     function saveBank() {
@@ -235,7 +262,7 @@
     }
 
     function buildStatsSummary() {
-      const entries = Object.values(progress);
+      const entries = allQuestions.map(q => progress[q.id]).filter(Boolean);
       const seen = entries.filter(e => e && (e.selected !== undefined || e.revealed)).length;
       const attempted = entries.filter(e => e && e.selected !== undefined).length;
       const correct = entries.filter(e => e && e.correct === true).length;
@@ -260,12 +287,12 @@
       box.innerHTML = history.slice(0, 6).map(item => `
         <div style="display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--border);">
           <div>
-            <div style="font-size:12px; font-weight:700;">Test ${item.testId || 'N/A'}</div>
+            <div style="font-size:12px; font-weight:700;">Test ${escapeHtml(item.testId || 'N/A')}</div>
             <div class="muted" style="font-size:11px;">${new Date(item.date).toLocaleDateString()}</div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:12px; font-weight:700; color: var(--accent);">${item.score}</div>
-            <div class="muted" style="font-size:11px;">${item.accuracy}%</div>
+            <div style="font-size:12px; font-weight:700; color: var(--accent);">${escapeHtml(item.score)}</div>
+            <div class="muted" style="font-size:11px;">${escapeHtml(item.accuracy)}%</div>
           </div>
         </div>
       `).join('');
@@ -276,7 +303,7 @@
       const isAnswered = state.selected !== undefined || state.revealed;
       const isMarked = !!state.marked;
       const hasNote = !!(state.note && String(state.note).trim());
-      const image = state.image || '';
+      const image = typeof state.image === 'string' && /^data:image\/(jpeg|png|webp);base64,/.test(state.image) ? state.image : '';
       const isCorrect = state.correct === true;
       const isWrong = state.correct === false;
 
@@ -290,14 +317,14 @@
 
       const optionMarkup = options.map(opt => {
         let classes = 'option';
+        if (state.selected === opt.letter) classes += ' selected';
         if (isAnswered) {
-          classes += ' selected';
           if (state.selected === opt.letter && state.correct === true) classes += ' correct';
           if (state.selected === opt.letter && state.correct === false) classes += ' wrong';
-          if (q.ans === opt.letter && !state.correct) classes += ' correct';
+          if (q.ans === opt.letter) classes += ' correct';
         }
         return `
-          <button class="${classes}" data-qid="${q.id}" data-choice="${opt.letter}" type="button">
+          <button class="${classes}" data-qid="${escapeHtml(q.id)}" data-choice="${opt.letter}" type="button">
             <span class="letter">${opt.letter.toUpperCase()}</span>
             <span>${opt.text}</span>
           </button>
@@ -305,29 +332,30 @@
       }).join('');
 
       return `
-        <article class="question-card" data-qid="${q.id}">
+        <article class="question-card" data-qid="${escapeHtml(q.id)}">
           <div class="question-head">
             <div class="row wrap" style="gap:8px;">
               <span class="badge">${escapeHtml(q.year || 'N/A')}</span>
               <span class="badge">${escapeHtml(q.subject || 'General')}</span>
               ${isMarked ? '<span class="badge marked">Marked</span>' : ''}
-              ${isAnswered ? `<span class="badge ${state.correct ? 'good' : 'bad'}">${state.correct ? 'Correct' : 'Wrong'}</span>` : ''}
+              ${state.selected !== undefined ? `<span class="badge ${state.correct ? 'good' : 'bad'}">${state.correct ? 'Correct' : 'Wrong'}</span>` : state.revealed ? '<span class="badge">Answer revealed</span>' : ''}
               ${hasNote ? '<span class="badge">Note</span>' : ''}
             </div>
             <strong class="muted">Q${index + 1}</strong>
           </div>
           <div class="question-stem">${text}</div>
           <div class="options">${optionMarkup}</div>
-          ${image ? `<img class="q-image" src="${image}" alt="Question illustration" />` : ''}
+          ${image ? `<img class="q-image" src="${escapeHtml(image)}" alt="Question illustration" />` : ''}
           <div class="notes ${hasNote ? 'open' : ''}">
-            <textarea data-note-id="${q.id}" placeholder="Add your notes here...">${escapeHtml(state.note || '')}</textarea>
+            <textarea data-note-id="${escapeHtml(q.id)}" placeholder="Add your notes here...">${escapeHtml(state.note || '')}</textarea>
           </div>
           <div class="actions">
-            <button type="button" data-action="reveal" data-qid="${q.id}">Reveal</button>
-            <button type="button" data-action="toggle-mark" data-qid="${q.id}">${isMarked ? 'Unmark' : 'Mark'}</button>
-            <button type="button" data-action="toggle-note" data-qid="${q.id}">${hasNote ? 'Hide note' : 'Add note'}</button>
-            <button type="button" data-action="attach" data-qid="${q.id}">Attach image</button>
-            <input type="file" class="hidden" accept="image/*" data-upload-id="${q.id}" />
+            <button type="button" data-action="reveal" data-qid="${escapeHtml(q.id)}">Reveal</button>
+            <button type="button" data-action="toggle-mark" data-qid="${escapeHtml(q.id)}">${isMarked ? 'Unmark' : 'Mark'}</button>
+            <button type="button" data-action="toggle-note" data-qid="${escapeHtml(q.id)}">${hasNote ? 'Hide note' : 'Add note'}</button>
+            <button type="button" data-action="explain" data-qid="${escapeHtml(q.id)}">Explain with AI</button>
+            <button type="button" data-action="attach" data-qid="${escapeHtml(q.id)}">Attach image</button>
+            <input type="file" class="hidden" accept="image/*" data-upload-id="${escapeHtml(q.id)}" />
           </div>
         </article>
       `;
@@ -348,7 +376,7 @@
       root.innerHTML = `
         <div class="stat"><strong>${allQuestions.length}</strong><small>Bank</small></div>
         <div class="stat"><strong>${currentSet.length}</strong><small>Visible</small></div>
-        <div class="stat"><strong>${Object.values(progress).filter(v => v && v.selected !== undefined).length}</strong><small>Answered</small></div>
+        <div class="stat"><strong>${allQuestions.filter(q => progress[q.id]?.selected !== undefined).length}</strong><small>Answered</small></div>
       `;
     }
 
@@ -373,6 +401,7 @@
     }
 
     function applyFilters() {
+      renderFilters();
       const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
       currentSet = allQuestions.filter(item => {
         if (activeYears.size && !activeYears.has(item.year)) return false;
@@ -396,7 +425,7 @@
           progress[qid].marked = !progress[qid].marked;
           saveProgress();
           buildStatsSummary();
-          renderQuestions();
+          applyFilters();
         });
       });
 
@@ -415,6 +444,7 @@
           progress[qid] = progress[qid] || {};
           progress[qid].revealed = true;
           saveProgress();
+          buildStatsSummary();
           renderQuestions();
         });
       });
@@ -422,7 +452,7 @@
       document.querySelectorAll('[data-action="attach"]').forEach(btn => {
         btn.addEventListener('click', () => {
           const qid = btn.dataset.qid;
-          const input = document.querySelector(`input[data-upload-id="${qid}"]`);
+          const input = btn.closest("article").querySelector("input[data-upload-id]");
           input?.click();
         });
       });
@@ -431,7 +461,8 @@
         input.addEventListener('change', async (event) => {
           const file = event.target.files[0];
           if (!file || !file.type.startsWith('image/')) return;
-          const dataUrl = await compressImage(file);
+          let dataUrl;
+          try { dataUrl = await compressImage(file); } catch { notify('This image could not be loaded. Try another image.'); return; }
           const qid = input.dataset.uploadId;
           progress[qid] = progress[qid] || {};
           progress[qid].image = dataUrl;
@@ -460,9 +491,12 @@
           progress[qid].correct = choice === question.ans;
           progress[qid].updatedAt = Date.now();
           saveProgress();
+          buildStatsSummary();
+          updateStatsBar();
           renderQuestions();
         });
       });
+      document.querySelectorAll('[data-action="explain"]').forEach(btn => btn.addEventListener('click', () => openTutor(btn.dataset.qid)));
     }
 
     function compressImage(file, maxWidth = 1200, quality = 0.82) {
@@ -527,9 +561,9 @@
 
       document.getElementById('sample-load').addEventListener('click', () => {
         allQuestions = SAMPLE_QUESTIONS.map(normalizeQuestion);
-        saveBank();
-        renderFilters();
-        applyFilters();
+        activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
+        document.getElementById('search-input').value = '';
+        saveBank(); renderFilters(); applyFilters(); buildStatsSummary();
       });
 
       document.getElementById('csv-import').addEventListener('click', () => {
@@ -539,48 +573,86 @@
       document.getElementById('csv-upload').addEventListener('change', async event => {
         const file = event.target.files[0];
         if (!file) return;
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          complete: results => {
-            const rows = results.data.filter(row => row.Question && String(row.Question).trim());
-            allQuestions = rows.map((row, index) => normalizeQuestion({
-              id: hashQuestion(String(row.Question), String(row.Subject || 'General'), Number(row.Year || 0)),
-              question: String(row.Question || ''),
-              subject: String(row.Subject || 'General'),
-              year: Number(row.Year || 0),
-              ans: String(row['Official Answer Key'] || '').toLowerCase().replace(/[^a-d]/g, '')
-            }));
-            saveBank();
-            renderFilters();
-            applyFilters();
-            event.target.value = '';
-          }
-        });
+        try {
+          const rows = parseCSV(await file.text());
+          const headers = rows.shift()?.map(h => h.replace(/^\uFEFF/, '').trim()) || [];
+          if (!headers.includes('Question') || !headers.includes('Official Answer Key')) throw new Error('CSV must include Question and Official Answer Key columns.');
+          const bank = rows.filter(r => r.some(v => v.trim())).map((r, i) => {
+            const row = Object.fromEntries(headers.map((h, j) => [h, r[j] || '']));
+            const ans = row['Official Answer Key'].trim().toLowerCase().replace(/^\(([a-d])\)$/, '$1');
+            if (!row.Question.trim() || !/^[a-d]$/.test(ans) || (row.Year && !/^\d{4}$/.test(row.Year.trim()))) throw new Error(`Invalid question, year, or answer in row ${i + 2}. Answers must be a, b, c, or d.`);
+            return normalizeQuestion({ question:row.Question, subject:row.Subject || 'General', year:Number(row.Year || 0), ans });
+          });
+          if (!bank.length) throw new Error('No questions were found in this file.');
+          allQuestions = [...new Map(bank.map(q => [q.id, q])).values()];
+          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
+          document.getElementById('search-input').value = '';
+          saveBank(); applyFilters(); buildStatsSummary();
+          notify(`Imported ${allQuestions.length} questions.`);
+        } catch (error) { notify(error.message); }
+        event.target.value = '';
       });
     }
 
-    function bindResize() {
-      const panel = document.querySelector('.sidebar');
-      if (!panel) return;
-      let dragging = false;
-      let raf = null;
-      document.addEventListener('pointerdown', event => {
-        if (window.innerWidth <= 900) return;
-        if (event.target.closest('.sidebar')) return;
-        dragging = true;
+    function notify(message) {
+      const notice = document.getElementById('notice');
+      notice.textContent = message; notice.classList.remove('hidden');
+    }
+
+    function parseCSV(text) {
+      const rows = []; let row = [], value = '', quoted = false;
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+        if (c === '"') {
+          if (quoted && text[i + 1] === '"') { value += '"'; i++; }
+          else if (quoted || value === '') quoted = !quoted;
+          else throw new Error('Invalid CSV quoting.');
+        } else if (c === ',' && !quoted) { row.push(value); value = ''; }
+        else if ((c === '\n' || c === '\r') && !quoted) {
+          if (c === '\r' && text[i + 1] === '\n') i++;
+          row.push(value); rows.push(row); row = []; value = '';
+        } else value += c;
+      }
+      if (quoted) throw new Error('CSV contains an unclosed quoted field.');
+      if (value || row.length) { row.push(value); rows.push(row); }
+      return rows;
+    }
+
+    let tutorQuestion = null, tutorMessages = [], tutorRequest = null;
+    function addTutorMessage(role, text) {
+      const node = document.createElement('div'); node.className = `ai-message ${role}`;
+      node.textContent = text; document.getElementById('ai-messages').append(node); node.scrollIntoView({block:'nearest'});
+    }
+    function openTutor(id) {
+      tutorQuestion = allQuestions.find(q => q.id === id); if (!tutorQuestion) return;
+      tutorMessages = []; document.getElementById('ai-messages').replaceChildren();
+      document.getElementById('ai-context').textContent = tutorQuestion.question;
+      document.getElementById('ai-question').value = 'Explain the correct answer and why the other options are incorrect.';
+      document.getElementById('ai-dialog').showModal();
+    }
+    function bindTutor() {
+      const dialog = document.getElementById('ai-dialog');
+      document.getElementById('ai-close').onclick = () => dialog.close();
+      dialog.addEventListener('close', () => tutorRequest?.abort());
+      document.getElementById('ai-cancel').onclick = () => tutorRequest?.abort();
+      document.getElementById('ai-form').addEventListener('submit', async event => {
+        event.preventDefault(); if (tutorRequest) return;
+        const input = document.getElementById('ai-question'), prompt = input.value.trim(); if (!prompt) return;
+        const controller = new AbortController(); tutorRequest = controller;
+        const send = document.getElementById('ai-send'), cancel = document.getElementById('ai-cancel');
+        send.disabled = true; send.textContent = 'Thinking…'; cancel.hidden = false;
+        addTutorMessage('user', prompt);
+        const timer = setTimeout(() => controller.abort(), 45000);
+        try {
+          const response = await fetch('/api/explain', { method:'POST', headers:{'Content-Type':'application/json'}, signal:controller.signal,
+            body:JSON.stringify({question:tutorQuestion.question, subject:tutorQuestion.subject, answer:tutorQuestion.ans, messages:[...tutorMessages, {role:'user', content:prompt}]}) });
+          const data = await response.json(); if (!response.ok) throw new Error(data.error || 'The tutor is unavailable. Please try again.');
+          if (!data.reply) throw new Error('The tutor returned an empty response. Please try again.');
+          tutorMessages.push({role:'user',content:prompt},{role:'assistant',content:data.reply});
+          addTutorMessage('assistant', data.reply); input.value = '';
+        } catch (error) { addTutorMessage('error', error.name === 'AbortError' ? 'Request stopped. You can try again.' : error.message); }
+        finally { clearTimeout(timer); tutorRequest = null; send.disabled = false; send.textContent = 'Ask tutor'; cancel.hidden = true; }
       });
-      document.addEventListener('pointermove', event => {
-        if (!dragging) return;
-        if (window.innerWidth <= 900) return;
-        if (raf) return;
-        raf = requestAnimationFrame(() => {
-          const width = Math.min(420, Math.max(240, window.innerWidth - event.clientX));
-          panel.style.width = `${width}px`;
-          raf = null;
-        });
-      });
-      document.addEventListener('pointerup', () => { dragging = false; });
     }
 
     function boot() {
@@ -589,7 +661,15 @@
       loadHistory();
       bindTheme();
       bindFilterEvents();
-      bindResize();
+      bindTutor();
+      document.getElementById('save-session').addEventListener('click', () => {
+        const attempted = currentSet.filter(q => progress[q.id]?.selected !== undefined);
+        if (!attempted.length) { notify('Answer at least one visible question before saving a result.'); return; }
+        const correct = attempted.filter(q => progress[q.id].correct).length;
+        history.unshift({testId:history.length + 1, date:new Date().toISOString(), score:`${correct}/${attempted.length}`, accuracy:Math.round(correct / attempted.length * 100)});
+        safeSet(STORAGE_KEYS.history, JSON.stringify(history)); renderHistory(); notify('Practice result saved.');
+      });
+      window.addEventListener('pagehide', () => { safeSet(STORAGE_KEYS.progress, JSON.stringify(progress)); safeSet(STORAGE_KEYS.history, JSON.stringify(history)); });
       renderFilters();
       applyFilters();
       buildStatsSummary();
