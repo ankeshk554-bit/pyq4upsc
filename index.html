@@ -151,6 +151,9 @@
     .settings-heading h2 { font-family:Georgia,serif; font-size:28px; font-weight:400; margin:6px 0 10px; letter-spacing:-.6px; }
     .settings-intro { color:var(--muted); font-size:12px; line-height:1.8; margin:0 0 22px; }
     #ai-settings-form label { display:block; font-size:12px; font-weight:600; margin:18px 0 8px; }
+    #ai-settings-form .remember-row { display:flex; align-items:center; gap:9px; font-size:12px; font-weight:500; }
+    .remember-row input { accent-color:var(--accent); width:16px; height:16px; }
+    .remember-help { color:var(--muted); font-size:11px; line-height:1.6; margin:6px 0; }
     #ai-settings-form .actions { margin-top:22px; }
     #ai-settings-form button[type="submit"] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
     #ai-model-help { color:var(--muted); font-size:11px; line-height:1.7; }
@@ -200,15 +203,16 @@
   </aside>
   <dialog id="ai-settings-dialog" class="ai-settings" aria-labelledby="ai-settings-title">
     <div class="settings-heading"><div><span class="eyebrow">Make it your own</span><h2 id="ai-settings-title">AI connection</h2></div><button id="ai-settings-close" class="icon-button" aria-label="Close AI settings">×</button></div>
-    <p class="settings-intro">Choose your provider and model. Keys stay in this tab and clear when you refresh.</p>
+    <p class="settings-intro">Choose your provider and model. Remember your connection to keep it after refreshing.</p>
       <form id="ai-settings-form"><label for="ai-provider">Provider</label><select id="ai-provider"><option value="openai">OpenAI</option><option value="deepseek">DeepSeek</option><option value="openrouter">OpenRouter · free models</option></select>
-      <label id="ai-key-label" for="ai-key">OpenAI API key</label><input id="ai-key" type="password" autocomplete="off" placeholder="Paste your key for this session" />
+      <label id="ai-key-label" for="ai-key">OpenAI API key</label><input id="ai-key" type="password" autocomplete="off" placeholder="Paste your API key" />
       <label for="ai-model">Model</label><select id="ai-model"><option value="gpt-4o-mini">GPT-4o mini</option><option value="gpt-4.1-mini">GPT-4.1 mini</option><option value="gpt-4.1">GPT-4.1</option></select>
       <button id="ai-refresh-models" type="button" hidden>Refresh free models</button><p id="ai-model-help" class="muted"></p>
+      <label class="remember-row" for="ai-remember"><input id="ai-remember" type="checkbox" /> Remember on this device</label><p class="remember-help">Saves this provider’s key in your browser. Use this on a trusted device.</p>
       <div class="actions"><button type="submit">Connect key</button><button id="ai-key-clear" type="button">Use server</button></div></form>
       <p id="ai-connection-status" role="status">Using server configuration. No browser key connected.</p>
 
-    <div class="actions" style="justify-content:flex-end"><button id="ai-settings-done" type="button">Done</button></div>
+    <div class="actions" style="justify-content:space-between"><button id="ai-forget-all" type="button">Forget saved keys</button><button id="ai-settings-done" type="button">Done</button></div>
   </dialog>
   <script>
     const STORAGE_KEYS = {
@@ -716,7 +720,8 @@
     }
 
     let tutorQuestion = null, tutorMessages = [], tutorRequest = null, sessionKey = '', sessionModel = 'gpt-4o-mini', sessionProvider = 'openai';
-    const providerKeys = {}, providerModels = {};
+    const providerKeys = {}, providerModels = {}, rememberedProviders = {};
+    const AI_STORAGE_PREFIX = 'uv_ai_connection_v1_', AI_PROVIDER_PREF = 'uv_ai_provider_v1';
     const providers = {openai:{name:'OpenAI', url:'https://api.openai.com/v1/chat/completions'}, deepseek:{name:'DeepSeek', url:'https://api.deepseek.com/chat/completions'}, openrouter:{name:'OpenRouter', url:'https://openrouter.ai/api/v1/chat/completions'}};
     const tutorChats = new Map();
     // Render a small Markdown subset with DOM nodes; model HTML is always text.
@@ -802,6 +807,38 @@
       document.getElementById('ai-dialog').hidden = false; document.body.classList.add('tutor-open');
       document.getElementById('ai-question').focus({preventScroll:true});
     }
+    function saveConnectionPreference() {
+      try {
+        const key = AI_STORAGE_PREFIX + sessionProvider;
+        if (rememberedProviders[sessionProvider] && providerKeys[sessionProvider]) {
+          localStorage.setItem(key, JSON.stringify({key:providerKeys[sessionProvider], model:sessionModel}));
+        } else localStorage.removeItem(key);
+        localStorage.setItem(AI_PROVIDER_PREF, sessionProvider);
+        return true;
+      } catch {
+        document.getElementById('ai-connection-status').textContent = 'Browser storage could not be updated. Your connection works in this tab; check browser storage settings before relying on it after refresh.';
+        return false;
+      }
+    }
+    function connectionStatus() {
+      if (!sessionKey) return 'Using server configuration. No browser key connected.';
+      return rememberedProviders[sessionProvider] ? `${providers[sessionProvider].name} key remembered on this device.` : `${providers[sessionProvider].name} session key connected. It clears on refresh.`;
+    }
+    function restoreConnections() {
+      for (const provider of Object.keys(providers)) {
+        try {
+          const saved = JSON.parse(localStorage.getItem(AI_STORAGE_PREFIX + provider));
+          if (!saved || typeof saved.key !== 'string' || !saved.key.trim() || saved.key.length > 4096) continue;
+          providerKeys[provider] = saved.key;
+          rememberedProviders[provider] = true;
+          if (typeof saved.model === 'string' && /^[a-zA-Z0-9_./:-]{1,150}$/.test(saved.model)) providerModels[provider] = saved.model;
+        } catch { /* Unavailable or malformed browser storage must not prevent practice. */ }
+      }
+      const preferred = safeGet(AI_PROVIDER_PREF);
+      if (Object.hasOwn(providers, preferred)) document.getElementById('ai-provider').value = preferred;
+      updateProviderModels();
+    }
+
     let modelLoad = 0;
     async function updateProviderModels() {
       const provider = document.getElementById('ai-provider').value;
@@ -811,7 +848,8 @@
       document.getElementById('ai-key-label').textContent = `${providers[provider].name} API key`;
       document.getElementById('ai-refresh-models').hidden = provider !== 'openrouter';
       sessionProvider = provider; sessionKey = providerKeys[provider] || '';
-      document.getElementById('ai-connection-status').textContent = sessionKey ? `${providers[provider].name} session key connected.` : 'No browser key connected for this provider. Requests use the server’s configured provider until you connect a key.';
+      document.getElementById('ai-remember').checked = !!rememberedProviders[provider];
+      document.getElementById('ai-connection-status').textContent = connectionStatus();
       modelSelect.replaceChildren();
       const option = (id, label) => { const node = document.createElement('option'); node.value = id; node.textContent = label; modelSelect.append(node); };
       if (provider === 'deepseek') {
@@ -861,16 +899,37 @@
 
       document.getElementById('ai-close').onclick = () => { panel.hidden = true; document.body.classList.remove('tutor-open'); tutorRequest?.abort(); };
       document.getElementById('ai-cancel').onclick = () => tutorRequest?.abort();
-      document.getElementById('ai-provider').onchange = () => updateProviderModels();
+      document.getElementById('ai-provider').onchange = () => { updateProviderModels(); try { localStorage.setItem(AI_PROVIDER_PREF, sessionProvider); } catch {} };
       document.getElementById('ai-refresh-models').onclick = () => updateProviderModels();
-      document.getElementById('ai-model').onchange = () => { sessionModel = document.getElementById('ai-model').value; providerModels[sessionProvider] = sessionModel; updateConnectionLabel(); };
+      document.getElementById('ai-model').onchange = () => { sessionModel = document.getElementById('ai-model').value; providerModels[sessionProvider] = sessionModel; if (saveConnectionPreference()) document.getElementById('ai-connection-status').textContent = connectionStatus(); updateConnectionLabel(); };
+      document.getElementById('ai-remember').onchange = event => {
+        rememberedProviders[sessionProvider] = event.target.checked;
+        if (saveConnectionPreference()) document.getElementById('ai-connection-status').textContent = connectionStatus();
+      };
       document.getElementById('ai-settings-form').onsubmit = event => {
         event.preventDefault(); const field = document.getElementById('ai-key');
-        if (!field.value.trim()) { document.getElementById('ai-connection-status').textContent = 'Paste a key first, or choose Use server.'; return; }
-        sessionKey = field.value.trim(); providerKeys[sessionProvider] = sessionKey; sessionModel = document.getElementById('ai-model').value.trim() || 'gpt-4o-mini'; field.value = '';
-        document.getElementById('ai-connection-status').textContent = `${providers[sessionProvider].name} session key connected. It will be checked when you ask the tutor.`; updateConnectionLabel();
+        if (!field.value.trim() && !sessionKey) { document.getElementById('ai-connection-status').textContent = 'Paste a key first, or choose Use server.'; return; }
+        sessionKey = field.value.trim() || sessionKey; providerKeys[sessionProvider] = sessionKey;
+        sessionModel = document.getElementById('ai-model').value || 'gpt-4o-mini'; providerModels[sessionProvider] = sessionModel; field.value = '';
+        rememberedProviders[sessionProvider] = document.getElementById('ai-remember').checked;
+        if (saveConnectionPreference()) document.getElementById('ai-connection-status').textContent = connectionStatus() + ' The key is checked when you ask the tutor.';
+        updateConnectionLabel();
       };
-      document.getElementById('ai-key-clear').onclick = () => { sessionKey = ''; delete providerKeys[sessionProvider]; document.getElementById('ai-key').value = ''; document.getElementById('ai-connection-status').textContent = 'Using server configuration. No browser key connected.'; updateConnectionLabel(); };
+      document.getElementById('ai-key-clear').onclick = () => {
+        sessionKey = ''; delete providerKeys[sessionProvider]; delete rememberedProviders[sessionProvider];
+        document.getElementById('ai-key').value = ''; document.getElementById('ai-remember').checked = false;
+        if (saveConnectionPreference()) document.getElementById('ai-connection-status').textContent = connectionStatus();
+        updateConnectionLabel();
+      };
+      document.getElementById('ai-forget-all').onclick = () => {
+        let removed = true;
+        for (const provider of Object.keys(providers)) {
+          delete providerKeys[provider]; delete rememberedProviders[provider];
+          try { localStorage.removeItem(AI_STORAGE_PREFIX + provider); } catch { removed = false; }
+        }
+        sessionKey = ''; document.getElementById('ai-key').value = ''; document.getElementById('ai-remember').checked = false; updateConnectionLabel();
+        document.getElementById('ai-connection-status').textContent = removed ? 'All saved and session keys removed. Using server configuration.' : 'Session keys cleared, but browser storage could not be cleared. Remove this site’s stored data in browser settings to forget saved keys.';
+      };
       document.getElementById('ai-new-chat').onclick = () => { tutorRequest?.abort(); tutorMessages = []; tutorChats.set(tutorQuestion.id, tutorMessages); document.getElementById('ai-messages').replaceChildren(); document.getElementById('ai-welcome').hidden = false; document.getElementById('ai-question').value = ''; };
       document.querySelectorAll('.ai-suggestion').forEach(btn => btn.onclick = () => { document.getElementById('ai-question').value = btn.textContent; document.getElementById('ai-question').focus(); });
       document.getElementById('ai-form').addEventListener('submit', async event => {
@@ -905,6 +964,7 @@
       bindTheme();
       bindFilterEvents();
       bindTutor();
+      restoreConnections();
       document.getElementById('save-session').addEventListener('click', () => {
         const attempted = currentSet.filter(q => progress[q.id]?.selected !== undefined);
         if (!attempted.length) { notify('Answer at least one visible question before saving a result.'); return; }
