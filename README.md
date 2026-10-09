@@ -55,3 +55,11 @@ Use **Save to question notes** below a tutor reply to append it to your existing
 Run `python3 tests/learning_smoke.py` to check the import-first experience, pagination, revision views, retries, and saved explanations. Browser regression fixtures live only in `tests/fixtures.py`.
 
 Run `python3 tests/remember_smoke.py` for opt-in key/model restoration, session-only behavior, and saved-key removal checks using synthetic credentials.
+
+## Tablets and browser compatibility
+
+The sidebar starts collapsed at tablet widths (up to 1200 CSS pixels, or up to 1366 with a touch pointer), including 11-inch iPad portrait and landscape sizes. Open it with **Filters** and close it with its × button, the backdrop, or Escape. Desktop users can also hide it; the desktop collapsed preference survives refresh. Opening the tutor closes the tablet drawer.
+
+Landscape tablet layouts keep questions beside the tutor. Narrower views use a tutor overlay. Touch targets are at least 44 pixels, touch inputs use 16-pixel text to avoid Safari focus zoom, and the composer follows the visual viewport as the software keyboard changes available space. Dynamic viewport sizing has fallbacks, and safe-area padding protects the bottom controls.
+
+`TEST_BROWSER=webkit python3 tests/tablet_smoke.py` runs the same seven iPad-size checks as Chromium (default). Install the desired engine with `python3 -m playwright install --with-deps webkit`. The Browser compatibility GitHub Actions workflow runs Chromium and WebKit on pushes to main and pull requests. These are engine/device emulation checks, not physical iPad testing.

@@ -17,6 +17,7 @@ with sync_playwright() as p:
     assert not page.locator('#ai-settings-dialog').is_visible()
     assert page.locator('#ai-dialog .ai-settings-open').evaluate('(e)=>e===document.activeElement')
     page.set_viewport_size({'width':390,'height':844})
+    page.wait_for_function('parseFloat(document.documentElement.style.getPropertyValue("--visual-height")) <= 844')
     assert page.locator('#ai-send').bounding_box()['y'] + page.locator('#ai-send').bounding_box()['height'] <= 844
     page.locator('#ai-dialog .ai-settings-open').click()
     assert page.locator('#ai-settings-dialog').bounding_box()['width'] <= 390
@@ -26,7 +27,7 @@ with sync_playwright() as p:
     page.locator('#ai-close').click()
     page.locator('#filters-toggle').click()
     assert page.locator('#search-input').is_visible()
-    page.locator('#filters-toggle').click()
+    page.locator('#sidebar-close').click()
     assert not page.locator('#search-input').is_visible()
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
     print('PASS desktop tutor separation, modal isolation/focus return, mobile composer, key field clearing, filter drawer and overflow')

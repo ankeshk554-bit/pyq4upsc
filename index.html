@@ -2,7 +2,7 @@
 <html lang="en" data-theme="amoled">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>UPSC Vault</title>
 
   <style>
@@ -35,7 +35,7 @@
     .wrap { flex-wrap:wrap; }
     .eyebrow { font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
     .app-shell { display:flex; min-height:100vh; }
-    .sidebar { position:sticky; top:0; width:258px; flex-shrink:0; height:100dvh; padding:28px 22px; border-right:1px solid var(--border); overflow-y:auto; scrollbar-width:thin; }
+    .sidebar { position:sticky; top:0; width:258px; flex-shrink:0; height:100vh; height:100dvh; padding:28px 22px; border-right:1px solid var(--border); overflow-y:auto; scrollbar-width:thin; }
     .brand { display:flex; gap:10px; align-items:center; margin-bottom:32px; font-size:18px; font-weight:650; letter-spacing:-.6px; }
     .brand-mark { display:grid; place-items:center; height:34px; width:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-size:22px; }
     .sidebar-section { border-top:1px solid var(--border); margin-top:24px; padding-top:22px; }
@@ -50,7 +50,12 @@
     .breadcrumb { font-size:12px; color:var(--muted); }
     .breadcrumb span { color:var(--text); margin-left:8px; }
     .topbar-actions { display:flex; gap:6px; }
-    .mobile-filters { display:none; }
+    .mobile-filters { display:block; }
+    .sidebar-brand { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .sidebar-brand .brand { font-size:16px; }
+    .sidebar-backdrop { position:fixed; inset:0; z-index:39; background:#0008; border:0; border-radius:0; }
+    .sidebar-backdrop:hover { background:#0008; }
+    .topbar { position:sticky; top:0; z-index:10; background:var(--bg); }
     .study-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:38px 0 30px; }
     .study-header h1 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:clamp(30px,3.4vw,48px); line-height:1.12; letter-spacing:-1.7px; margin:12px 0; }
     .study-header p { color:var(--muted); font-size:13px; line-height:1.7; max-width:410px; margin:0; }
@@ -88,8 +93,8 @@
     .option { display:flex; align-items:center; gap:14px; width:100%; text-align:left; padding:13px 15px; border-radius:10px; font-size:13px; line-height:1.65; font-weight:400; }
     .letter { display:grid; place-items:center; flex-shrink:0; width:26px; height:26px; border:1px solid var(--border); border-radius:7px; font-size:10px; color:var(--muted); }
     .option:disabled { opacity:1; cursor:default; }
-    .option.correct { border-color:var(--good); background:color-mix(in srgb,var(--good) 8%,transparent); }
-    .option.wrong { border-color:var(--bad); background:color-mix(in srgb,var(--bad) 8%,transparent); }
+    .option.correct { border-color:var(--good); background:rgba(130,204,165,.08); background:color-mix(in srgb,var(--good) 8%,transparent); }
+    .option.wrong { border-color:var(--bad); background:rgba(239,154,151,.08); background:color-mix(in srgb,var(--bad) 8%,transparent); }
     .option.selected .letter { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
     .actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:18px; }
     .question-card > .actions { padding-top:18px; border-top:1px solid var(--border); }
@@ -98,7 +103,7 @@
     .notes { display:none; margin-top:16px; } .notes.open { display:block; }
     .q-image { display:block; max-width:100%; max-height:500px; border-radius:10px; margin-top:16px; }
     .empty { text-align:center; color:var(--muted); padding:50px 20px; border:1px dashed var(--border); border-radius:14px; }
-    #ai-dialog { position:fixed; inset:0 0 0 auto; width:400px; height:100dvh; display:flex; flex-direction:column; border-left:1px solid var(--border); background:var(--card); z-index:20; box-shadow:-12px 0 50px var(--shadow); }
+    #ai-dialog { position:fixed; inset:0 0 0 auto; width:400px; height:100vh; height:100dvh; display:flex; flex-direction:column; border-left:1px solid var(--border); background:var(--card); z-index:20; box-shadow:-12px 0 50px var(--shadow); }
     body.tutor-open .app-shell { margin-right:400px; }
     .tutor-header { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:20px; border-bottom:1px solid var(--border); flex-shrink:0; }
     .tutor-identity { display:flex; align-items:center; gap:10px; min-width:0; }
@@ -159,16 +164,50 @@
     #ai-model-help { color:var(--muted); font-size:11px; line-height:1.7; }
     #ai-refresh-models { margin-top:10px; font-size:11px; }
     #ai-connection-status { border-top:1px solid var(--border); padding-top:16px; margin:20px 0 0; color:var(--muted); font-size:11px; line-height:1.7; }
-    @media(min-width:1101px) { body.tutor-open .main { padding-left:28px; padding-right:28px; } body.tutor-open .study-symbol { display:none; } }
-    @media(max-width:1100px) { body.tutor-open .app-shell { margin-right:0; } .main { padding:0 26px 40px; } .sidebar { width:230px; padding:24px 16px; } }
-    @media(max-width:760px) { .sidebar { display:none; position:fixed; top:65px; left:0; width:280px; height:calc(100dvh - 65px); z-index:15; background:var(--card); box-shadow:15px 0 40px var(--shadow); } body.filters-open .sidebar { display:block; } .mobile-filters { display:block; } .main { padding:0 18px 30px; } .topbar { min-height:65px; } .breadcrumb { display:none; } .study-header { padding:26px 0; } .study-header h1 { font-size:36px; } .study-symbol { display:none; } .question-card { padding:20px 16px; } .question-stem { font-size:15px; } .question-card .actions [data-action="explain"] { margin-left:0; } #ai-dialog { width:min(400px,100%); } .workspace-bar > button { font-size:11px; } }
+    .sidebar,.chat-scroll,#ai-context,.ai-settings { -webkit-overflow-scrolling:touch; }
+    .sidebar { padding-bottom:calc(28px + env(safe-area-inset-bottom)); }
+    #ai-dialog { top:var(--visual-top,0px); bottom:auto; height:var(--visual-height,100dvh); padding-right:env(safe-area-inset-right); }
+    #ai-form { padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+    .tutor-header { padding-top:calc(20px + env(safe-area-inset-top)); }
+    .tutor-identity > div { min-width:0; }
+    .ai-settings { max-height:calc(var(--visual-height,100vh) - 32px); margin:0; left:50%; top:calc(var(--visual-top,0px) + var(--visual-height,100vh) / 2); transform:translate(-50%,-50%); }
+    .ai-settings::backdrop { -webkit-backdrop-filter:blur(5px); }
+    .questions { scroll-margin-top:100px; }
+    @media(min-width:1201px) { body.tutor-open .main { padding-left:28px; padding-right:28px; } body.tutor-open .study-symbol { display:none; } }
+    @media(max-width:1200px), (pointer:coarse) and (max-width:1366px) {
+      .sidebar { position:fixed; inset:0 auto 0 0; width:min(320px,85vw); z-index:40; background:var(--card); padding:24px 20px; height:100vh; height:100dvh; box-shadow:15px 0 40px var(--shadow); }
+      body.sidebar-drawer-open { overflow:hidden; }
+      .main { padding:0 26px 40px; }
+      body.tutor-open .app-shell { margin-right:380px; }
+      #ai-dialog { width:380px; }
+      body.tutor-open .study-symbol,body.tutor-open .breadcrumb { display:none; }
+    }
+    @media(max-width:900px) {
+      body.tutor-open .app-shell { margin-right:0; }
+      #ai-dialog { width:min(440px,100%); }
+      body.tutor-open { overflow:hidden; }
+    }
+    @media(max-width:760px) {
+      .main { padding:0 18px 30px; } .topbar { min-height:65px; } .breadcrumb { display:none; }
+      .study-header { padding:26px 0; } .study-header h1 { font-size:36px; } .study-symbol { display:none; }
+      .question-card { padding:20px 16px; } .question-stem { font-size:15px; }
+      .question-card .actions [data-action="explain"] { margin-left:0; } .workspace-bar > button { font-size:11px; }
+    }
+    @media(pointer:coarse) {
+      button,.chip,.icon-button { min-height:44px; } .icon-button { min-width:44px; }
+      input[type="search"],input[type="text"],input[type="password"],select,textarea,#ai-question,.study-tools select { font-size:16px; }
+      .option { font-size:15px; padding:14px; }
+      #ai-active-connection { max-width:125px; } #ai-title { font-size:14px; }
+      .tutor-header { padding-left:14px; padding-right:14px; }
+    }
     @media(prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
   </style>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Question filters and progress">
-      <div class="brand"><span class="brand-mark" aria-hidden="true">◈</span>UPSC Vault</div>
+    <button id="sidebar-backdrop" class="sidebar-backdrop" aria-label="Close question filters" type="button" tabindex="-1" hidden></button>
+    <aside id="question-sidebar" class="sidebar" aria-label="Question filters and progress">
+      <div class="sidebar-brand"><div class="brand"><span class="brand-mark" aria-hidden="true">◈</span>UPSC Vault</div><button id="sidebar-close" class="icon-button" type="button" aria-label="Hide sidebar">×</button></div>
       <span class="eyebrow">Your question library</span>
       <div class="toolbar"><button id="csv-import" type="button" class="primary">Import CSV</button><input id="csv-upload" class="hidden" type="file" accept=".csv" /></div>
       <section class="sidebar-section"><h2>Find your focus</h2>
@@ -183,7 +222,7 @@
     </aside>
     <main class="main">
       <nav class="topbar" aria-label="Workspace controls"><div class="breadcrumb">Workspace / <span>Prelims practice</span></div>
-        <button id="filters-toggle" class="mobile-filters" aria-expanded="false" aria-label="Toggle question filters">☰ Filters</button>
+        <button id="filters-toggle" class="mobile-filters" aria-expanded="false" aria-controls="question-sidebar" aria-label="Toggle question filters">☰ Filters</button>
         <div class="topbar-actions"><button id="theme-toggle" class="quiet" aria-label="Toggle theme">◐ Theme</button><button class="ai-settings-open" type="button">⚙︎ AI settings</button></div>
       </nav>
       <header class="study-header"><div><span class="eyebrow">One question. A deeper understanding.</span><h1>Make room for<br>your next breakthrough.</h1><p>A focused space for previous-year questions, thoughtful revision, and a little help when you need it.</p></div><div class="study-symbol" aria-hidden="true">✳</div></header>
@@ -739,7 +778,16 @@
     }
     function renderTutorAnswer(root, text) {
       const lines = text.replace(/\r\n?/g, '\n').split('\n');
-      const cells = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split(/(?<!\\)\|/).map(value => value.trim().replace(/\\\|/g, '|'));
+      const cells = line => {
+        const source = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+        const result = []; let value = '';
+        for (let j = 0; j < source.length; j++) {
+          if (source[j] === '\\' && source[j + 1] === '|') { value += '|'; j++; }
+          else if (source[j] === '|') { result.push(value.trim()); value = ''; }
+          else value += source[j];
+        }
+        result.push(value.trim()); return result;
+      };
       const tableDivider = line => line.includes('|') && cells(line).every(cell => /^:?-{3,}:?$/.test(cell));
       const blockStart = line => /^(?:#{1,6}\s|>\s?|[-+*]\s+|\d+[.)]\s+|```|~~~)/.test(line.trim());
       for (let i = 0; i < lines.length;) {
@@ -796,6 +844,7 @@
     }
     function openTutor(id) {
       const next = allQuestions.find(q => q.id === id); if (!next) return;
+      if (tabletLayout.matches) setSidebar(false);
       if (tutorQuestion?.id !== id) tutorRequest?.abort();
       tutorQuestion = next;
       tutorMessages = tutorChats.get(id) || []; tutorChats.set(id, tutorMessages);
@@ -835,7 +884,7 @@
         } catch { /* Unavailable or malformed browser storage must not prevent practice. */ }
       }
       const preferred = safeGet(AI_PROVIDER_PREF);
-      if (Object.hasOwn(providers, preferred)) document.getElementById('ai-provider').value = preferred;
+      if (Object.prototype.hasOwnProperty.call(providers, preferred)) document.getElementById('ai-provider').value = preferred;
       updateProviderModels();
     }
 
@@ -895,7 +944,7 @@
       document.getElementById('ai-settings-done').onclick = () => settings.close();
       settings.addEventListener('close', () => { document.body.classList.remove('settings-open'); document.getElementById('ai-key').value = ''; updateConnectionLabel(); });
       settings.addEventListener('click', event => { if (event.target === settings) { const rect = settings.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) settings.close(); } });
-      document.getElementById('filters-toggle').onclick = event => { const open = document.body.classList.toggle('filters-open'); event.currentTarget.setAttribute('aria-expanded', String(open)); };
+
 
       document.getElementById('ai-close').onclick = () => { panel.hidden = true; document.body.classList.remove('tutor-open'); tutorRequest?.abort(); };
       document.getElementById('ai-cancel').onclick = () => tutorRequest?.abort();
@@ -957,6 +1006,34 @@
       });
     }
 
+    const tabletLayout = window.matchMedia('(max-width:1200px), (pointer:coarse) and (max-width:1366px)');
+    function setSidebar(open, remember = false, focus = false) {
+      document.getElementById('question-sidebar').hidden = !open;
+      document.getElementById('filters-toggle').setAttribute('aria-expanded', String(open));
+      document.getElementById('sidebar-backdrop').hidden = !(open && tabletLayout.matches);
+      document.body.classList.toggle('sidebar-drawer-open', open && tabletLayout.matches);
+      if (remember && !tabletLayout.matches) safeSet('uv_sidebar_collapsed', String(!open));
+      if (focus) document.getElementById(open ? 'sidebar-close' : 'filters-toggle').focus({preventScroll:true});
+    }
+    function bindResponsiveLayout() {
+      const reset = () => setSidebar(!tabletLayout.matches && safeGet('uv_sidebar_collapsed') !== 'true');
+      reset(); tabletLayout.addEventListener('change', reset);
+      document.getElementById('filters-toggle').onclick = () => setSidebar(document.getElementById('question-sidebar').hidden, true, true);
+      document.getElementById('sidebar-close').onclick = () => setSidebar(false, true, true);
+      document.getElementById('sidebar-backdrop').onclick = () => setSidebar(false, false, true);
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !document.getElementById('ai-settings-dialog').open && !document.getElementById('question-sidebar').hidden) setSidebar(false, true, true);
+      });
+      const viewport = window.visualViewport;
+      const resize = () => {
+        if (viewport && viewport.scale !== 1) return;
+        document.documentElement.style.setProperty('--visual-height', `${viewport ? viewport.height : window.innerHeight}px`);
+        document.documentElement.style.setProperty('--visual-top', `${viewport ? viewport.offsetTop : 0}px`);
+      };
+      resize(); window.addEventListener('resize', resize);
+      if (viewport) { viewport.addEventListener('resize', resize); viewport.addEventListener('scroll', resize); }
+    }
+
     function boot() {
       loadBank();
       loadProgress();
@@ -964,6 +1041,7 @@
       bindTheme();
       bindFilterEvents();
       bindTutor();
+      bindResponsiveLayout();
       restoreConnections();
       document.getElementById('save-session').addEventListener('click', () => {
         const attempted = currentSet.filter(q => progress[q.id]?.selected !== undefined);
