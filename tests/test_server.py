@@ -86,6 +86,20 @@ class TutorTests(unittest.TestCase):
                 self.assertEqual(json.loads(call.call_args.args[0].data)['max_tokens'], 8000)
                 self.assertIn('Final answer' if status == 200 else 'output allowance', body.get('reply', body.get('error')))
 
+    def test_full_followup_history(self):
+        data = self.payload()
+        history = []
+        for turn in range(12):
+            history.extend([{'role':'user','content':f'Question {turn}'}, {'role':'assistant','content':f'Answer {turn}: ' + 'detail ' * 1000}])
+        data['messages'] = history + [{'role':'user','content':'Explain your last point'}]
+        reply = io.BytesIO(json.dumps({'choices':[{'message':{'content':'Follow-up answer'}}]}).encode())
+        with patch.dict(server.os.environ, {'AI_API_KEY':'test-only-key'}), patch.object(server, 'urlopen', return_value=reply) as call:
+            status, _ = self.request(data)
+        self.assertEqual(status, 200)
+        sent = json.loads(call.call_args.args[0].data)['messages']
+        self.assertEqual(sent[1:], data['messages'])
+        self.assertIn('especially your immediately preceding answer', sent[0]['content'])
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:
