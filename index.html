@@ -286,7 +286,7 @@
       try { return localStorage.getItem(key); } catch { return null; }
     }
     function safeSet(key, value) {
-      try { localStorage.setItem(key, value); return true; } catch { notify('Your browser could not save changes. Export or copy important notes before leaving.'); return false; }
+      try { localStorage.setItem(key, value); return true; } catch { notify('Your browser could not save changes. Copy important notes before leaving.'); return false; }
     }
 
     function escapeHtml(s = '') {
@@ -343,7 +343,7 @@
     }
 
     function saveBank() {
-      safeSet(STORAGE_KEYS.bank, JSON.stringify(allQuestions.map(q => ({ ...q, _search: undefined }))));
+      return safeSet(STORAGE_KEYS.bank, JSON.stringify(allQuestions.map(q => ({ ...q, _search: undefined }))));
     }
     const saveProgress = debounce(() => { safeSet(STORAGE_KEYS.progress, JSON.stringify(progress)); }, 220);
     const saveHistory = debounce(() => { safeSet(STORAGE_KEYS.history, JSON.stringify(history)); }, 220);
@@ -710,7 +710,22 @@
         const file = event.target.files[0];
         if (!file) return;
         try {
-          const rows = parseCSV(await file.text());
+          const {bank, issues} = readQuestionCSV(await file.text());
+          if (!bank.length) throw new Error(`No valid questions found. ${issues.slice(0, 5).join('; ')}`);
+          allQuestions = bank;
+          studyView = 'all'; document.getElementById('study-view').value = 'all';
+          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
+          document.getElementById('search-input').value = '';
+          const saved = saveBank(); applyFilters(); buildStatsSummary();
+          notify(`Imported ${allQuestions.length} questions.${saved ? '' : ' Browser storage is full or unavailable: this bank is available only until you leave this page. Keep your CSV.'}${issues.length ? ` ${issues.length} import notices: ${issues.slice(0, 8).join('; ')}${issues.length > 8 ? '; see downloaded report for all rows.' : ''}` : ''}`);
+          if (issues.length) { const report = new Blob([issues.join('\n')], {type:'text/plain'}); const url = URL.createObjectURL(report); const link = document.createElement('a'); link.href = url; link.download = 'csv-import-report.txt'; link.textContent = 'Download full import report'; document.getElementById('notice').append(' ', link); link.onclick = () => setTimeout(() => URL.revokeObjectURL(url), 60000); }
+        } catch (error) { notify(error.message); }
+        event.target.value = '';
+      });
+    }
+
+    function readQuestionCSV(text) {
+          const rows = parseCSV(text);
           const headers = rows.shift()?.map(h => h.replace(/^\uFEFF/, '').trim()) || [];
           if (!headers.includes('Question') || !headers.includes('Official Answer Key')) throw new Error('CSV must include Question and Official Answer Key columns.');
           const bank = [], issues = [];
@@ -727,17 +742,24 @@
             if (!ans) issues.push(`Row ${i + 2}: no answer key (imported without grading)`);
             bank.push(normalizeQuestion({question:row.Question, subject:row.Subject || 'General', year, ans}));
           });
-          if (!bank.length) throw new Error(`No valid questions found. ${issues.slice(0, 5).join('; ')}`);
-          allQuestions = [...new Map(bank.map(q => [q.id, q])).values()];
-          studyView = 'all'; document.getElementById('study-view').value = 'all';
-          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
-          document.getElementById('search-input').value = '';
-          saveBank(); applyFilters(); buildStatsSummary();
-          notify(`Imported ${allQuestions.length} questions.${issues.length ? ` ${issues.length} import notices: ${issues.slice(0, 8).join('; ')}${issues.length > 8 ? '; see downloaded report for all rows.' : ''}` : ''}`);
-          if (issues.length) { const report = new Blob([issues.join('\n')], {type:'text/plain'}); const url = URL.createObjectURL(report); const link = document.createElement('a'); link.href = url; link.download = 'csv-import-report.txt'; link.textContent = 'Download full import report'; document.getElementById('notice').append(' ', link); link.onclick = () => setTimeout(() => URL.revokeObjectURL(url), 60000); }
-        } catch (error) { notify(error.message); }
-        event.target.value = '';
-      });
+      return {bank:[...new Map(bank.map(q => [q.id, q])).values()], issues};
+    }
+
+    async function loadPublishedBank() {
+      if (allQuestions.length) return;
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch('data/questions.csv', {signal:controller.signal});
+        if (response.status === 404) return;
+        if (!response.ok) throw new Error('Could not load the published question bank. Reload to retry, or import a CSV.');
+        const {bank, issues} = readQuestionCSV(await response.text());
+        // A personal import that finishes during this fetch always takes priority.
+        if (allQuestions.length || !bank.length) return;
+        allQuestions = bank; const saved = saveBank(); renderFilters(); applyFilters(); buildStatsSummary();
+        notify(`Loaded ${bank.length} published questions.${saved ? '' : ' Browser storage is unavailable; progress may not survive refresh.'}${issues.length ? ` ${issues.length} import notices; questions without answer keys remain ungraded.` : ''}`);
+      } catch (error) {
+        if (!allQuestions.length) notify(error.name === 'AbortError' ? 'Loading the published bank timed out. Reload to retry, or import a CSV.' : error.message);
+      } finally { clearTimeout(timer); }
     }
 
     function notify(message) {
@@ -1184,6 +1206,7 @@
       applyFilters();
       buildStatsSummary();
       renderHistory();
+      loadPublishedBank();
     }
 
     document.addEventListener('DOMContentLoaded', boot);

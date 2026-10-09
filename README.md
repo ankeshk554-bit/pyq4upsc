@@ -17,8 +17,8 @@ The default port is 8000; set `PORT` to change it. The server binds to loopback 
 Open the separate **AI settings** popup from the page header or the tutor’s gear button. Choose your provider, choose a model, enter the matching API key and click **Connect key**. This supports DeepSeek paid keys, OpenRouter keys, and OpenAI keys on both static hosting and the local server. Each provider's key is kept separate; switching providers never sends one provider's key to another. Check **Remember on this device** to restore that key and model after refreshing. Without this option, the key stays in memory and clears on refresh.
 
 - **DeepSeek:** `deepseek-chat` for quick explanations, `deepseek-reasoner` for deeper reasoning. Your paid API balance is used.
-- **OpenRouter:** the picker fetches `/api/v1/models` and lists only `:free` text models with zero prompt and completion prices. It suggests a reasoning model with longer context using a heuristic, not a UPSC accuracy benchmark. `openrouter/free` is an automatic free-model router available as a fallback. Free models have rate limits and may be removed. No paid model fallback is selected by the picker.
-- **OpenAI:** GPT-4o mini and GPT-4.1 variants.
+- **OpenRouter:** the picker fetches `/api/v1/models` and defaults to `:free` text models with zero prompt and completion prices. It suggests a reasoning model with longer context using a heuristic, not a UPSC accuracy benchmark. `openrouter/free` is an automatic free-model router available as a fallback. Free models have rate limits and may be removed. No paid model fallback is selected by the picker.
+- **OpenAI:** GPT-4o, GPT-4o mini and GPT-4.1 variants.
 
 For server-side configuration instead, set `AI_PROVIDER` to `deepseek`, `openrouter`, or `openai` and supply `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`, or `OPENAI_API_KEY` respectively. `AI_API_KEY` is a fallback for the configured provider. Optional `AI_MODEL` overrides its default (`deepseek-chat`, `openrouter/free`, or `gpt-4o-mini`). Restart the server after configuration. Without a connected browser session key, the server uses its own configured provider; the browser picker applies to browser session keys.
 
@@ -75,3 +75,13 @@ Drag the tutor's left edge to resize it on tablets and desktops. The focused han
 Saved AI notes remove Markdown heading, emphasis and table syntax while preserving readable text. Use **Clean formatting** on existing notes, with **Undo cleanup** available until refresh. Run `python3 tests/tutor_reliability_smoke.py` for mocked recovery, paid model filtering, note cleanup and resizing checks; it also supports `TEST_BROWSER=webkit`.
 
 Follow-up questions send the complete successful conversation for the current exam question, including previous assistant answers. Closing and reopening the tutor or visiting another question retains that question’s chat until the page is refreshed. **New conversation** explicitly resets it. The app stops with a clear message at 99 messages or a 240 KB request rather than silently dropping older turns. Provider context limits may be lower. Follow-up instructions resolve references against the preceding answer; model understanding still varies. Run `python3 tests/followup_smoke.py` to verify the history sent through direct and server connections.
+
+## Publishing and question storage
+
+You import a CSV only once on the same browser and website address. The bank, answers, bookmarks and notes are saved in localStorage. Private browsing, clearing site data, changing domains, and using another device do not share that storage. Save important notes elsewhere before clearing browser data.
+
+To offer questions immediately to every visitor, replace `data/questions.csv` with a bank you are allowed to publish, then deploy it beside `index.html`. The current file contains headers only. New visitors load the published bank automatically and cache it locally. Existing personal banks take priority; updating the published CSV does not overwrite them. Existing users can import the new CSV manually. A failed download leaves CSV import available.
+
+For an initial public release, static hosting such as GitHub Pages can serve these files. Each user connects their own AI key. Do not put your paid key in frontend code or the published CSV. The Python server is a development tool, not a public AI backend. If you want to provide AI using your own account, add an authenticated backend, per-user quotas/rate limits and spending controls first.
+
+Accounts plus a database are the next step for automatic progress/notes synchronization across devices. A downloadable study backup is also a useful future addition. Current local storage does not provide either capability. Chat history remains limited to the current page session.

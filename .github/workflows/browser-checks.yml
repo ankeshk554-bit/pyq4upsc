@@ -46,3 +46,4 @@ jobs:
           python tests/tablet_smoke.py
           python tests/tutor_reliability_smoke.py
           python tests/followup_smoke.py
+          python tests/published_bank_smoke.py

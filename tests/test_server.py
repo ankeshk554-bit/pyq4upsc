@@ -100,6 +100,11 @@ class TutorTests(unittest.TestCase):
         self.assertEqual(sent[1:], data['messages'])
         self.assertIn('especially your immediately preceding answer', sent[0]['content'])
 
+    def test_published_bank_is_public(self):
+        with urlopen(self.url+'/data/questions.csv') as response:
+            self.assertEqual(response.status, 200)
+            self.assertTrue(response.read().startswith(b'Question,Subject,Year,Official Answer Key'))
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:
