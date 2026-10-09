@@ -63,3 +63,13 @@ The sidebar starts collapsed at tablet widths (up to 1200 CSS pixels, or up to 1
 Landscape tablet layouts keep questions beside the tutor. Narrower views use a tutor overlay. Touch targets are at least 44 pixels, touch inputs use 16-pixel text to avoid Safari focus zoom, and the composer follows the visual viewport as the software keyboard changes available space. Dynamic viewport sizing has fallbacks, and safe-area padding protects the bottom controls.
 
 `TEST_BROWSER=webkit python3 tests/tablet_smoke.py` runs the same seven iPad-size checks as Chromium (default). Install the desired engine with `python3 -m playwright install --with-deps webkit`. The Browser compatibility GitHub Actions workflow runs Chromium and WebKit on pushes to main and pull requests. These are engine/device emulation checks, not physical iPad testing.
+
+## Tutor models, notes and panel size
+
+OpenRouter settings default to free text models. Enable **Include paid GPT-4o and DeepSeek models** to show those currently in the live catalog, then explicitly select one. Paid entries show input/output prices per million tokens and require OpenRouter credits. Your direct DeepSeek key continues to work under the DeepSeek provider. Content moderation models are excluded from study suggestions.
+
+Reasoning models receive a larger output allowance (up to 8,000 tokens) and a two-minute browser timeout. Supported OpenRouter models use low reasoning effort. Temporary free-model capacity errors receive one short retry; paid requests are never automatically retried or selected as a fallback. Empty or truncated answers leave your question available to retry. Provider availability and accuracy cannot be guaranteed.
+
+Drag the tutor's left edge to resize it on tablets and desktops. The focused handle supports arrow keys, Home to reset, and End to maximize; width is remembered and constrained to the viewport. Phones keep a full-width panel.
+
+Saved AI notes remove Markdown heading, emphasis and table syntax while preserving readable text. Use **Clean formatting** on existing notes, with **Undo cleanup** available until refresh. Run `python3 tests/tutor_reliability_smoke.py` for mocked recovery, paid model filtering, note cleanup and resizing checks; it also supports `TEST_BROWSER=webkit`.

@@ -44,3 +44,4 @@ jobs:
               raise SystemExit('Development server did not start')
           PY
           python tests/tablet_smoke.py
+          python tests/tutor_reliability_smoke.py

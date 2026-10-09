@@ -84,18 +84,23 @@ class Handler(SimpleHTTPRequestHandler):
         )
         payload = json.dumps({'model': os.environ.get('AI_MODEL', default_model),
             'messages': [{'role':'system', 'content':prompt}] + [{'role':m['role'], 'content':m['content']} for m in messages],
-            'max_tokens': 8000 if os.environ.get('AI_MODEL', default_model) == 'deepseek-reasoner' else 2000}).encode()
+            'max_tokens': 8000 if provider == 'openrouter' or os.environ.get('AI_MODEL', default_model) == 'deepseek-reasoner' else 2000}).encode()
         request = Request(endpoint, data=payload,
             headers={'Authorization': f'Bearer {key}', 'Content-Type':'application/json'})
         try:
-            with urlopen(request, timeout=75) as response:
+            with urlopen(request, timeout=110) as response:
                 result = json.load(response)
-            reply = result['choices'][0]['message']['content']
+            choice = result['choices'][0]
+            reply = choice['message']['content']
+            if isinstance(reply, list):
+                reply = '\n'.join(part['text'] for part in reply if isinstance(part, dict) and part.get('type') == 'text' and isinstance(part.get('text'), str))
+            if not reply and choice.get('finish_reason') == 'length':
+                self.respond(502, {'error':'The model used its output allowance before finishing an answer. Try a non-reasoning model or a shorter question.'}); return
             if not isinstance(reply, str) or not reply.strip(): raise ValueError('Empty provider response')
             self.respond(200, {'reply':reply})
         except HTTPError as error:
             self.respond(502, {'error': 'AI usage limit reached. Try again later.' if error.code == 429 else 'The AI provider rejected the request. Check the server key and model configuration.'})
-        except (URLError, TimeoutError, ValueError, KeyError, IndexError):
+        except (URLError, TimeoutError, ValueError, KeyError, IndexError, TypeError):
             self.respond(502, {'error':'The AI service is unavailable. Please try again shortly.'})
 
 if __name__ == '__main__':

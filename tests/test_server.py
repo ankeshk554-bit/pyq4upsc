@@ -76,6 +76,16 @@ class TutorTests(unittest.TestCase):
                 self.assertEqual(request.get_header('Authorization'), 'Bearer provider-test-key')
                 self.assertEqual(json.loads(request.data)['model'], model)
 
+    def test_reasoning_output_and_structured_content(self):
+        for content, finish, status in (([{'type':'text','text':'Final answer'}], 'stop', 200), (None, 'length', 502)):
+            with self.subTest(finish=finish):
+                reply = io.BytesIO(json.dumps({'choices':[{'message':{'content':content},'finish_reason':finish}]}).encode())
+                with patch.dict(server.os.environ, {'AI_PROVIDER':'openrouter','AI_API_KEY':'test-only-key'}), patch.object(server, 'urlopen', return_value=reply) as call:
+                    actual, body = self.request(self.payload())
+                self.assertEqual(actual, status)
+                self.assertEqual(json.loads(call.call_args.args[0].data)['max_tokens'], 8000)
+                self.assertIn('Final answer' if status == 200 else 'output allowance', body.get('reply', body.get('error')))
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:
