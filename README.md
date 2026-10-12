@@ -1,6 +1,6 @@
 # UPSC Vault
 
-A responsive question bank with CSV import, answer feedback, bookmarks, notes, image attachments, themes, and a question-aware AI tutor. Practice works without external scripts or an internet connection after loading the page. Progress is saved in the browser.
+A responsive question bank with an automatically loaded question bank, answer feedback, bookmarks, notes, image attachments, themes, and a question-aware AI tutor. Practice works without external scripts or an internet connection after loading the page. Progress is saved in the browser.
 
 ## Run
 
@@ -30,7 +30,7 @@ This is a local development server. A public deployment needs authenticated acce
 
 ## CSV
 
-Use `Question,Subject,Year,Official Answer Key` headers. `Question` and `Official Answer Key` are required; Answers accept upper/lowercase `a`–`d`, `(a)`–`(d)`, `A.`, `Option B`, and `1`–`4` (mapped to a–d). Blank, `X`, and unavailable/deleted keys import without grading; no answer is guessed. A single four-digit year is recognized in year labels; unrecognized years import as unknown with a notice. Options in question text use `(a)`–`(d)`. Quoted commas, escaped quotes, and multiline fields are supported. Invalid rows are skipped with an import summary and downloadable row report. If no valid questions remain, the current bank is preserved. Literal `\n` markers in question text are displayed as line breaks. An import replaces the bank and resets filters; old progress remains available if the same bank is imported again.
+Use `Question,Subject,Year,Official Answer Key` headers. `Question` and `Official Answer Key` are required; Answers accept upper/lowercase `a`–`d`, `(a)`–`(d)`, `A.`, `Option B`, and `1`–`4` (mapped to a–d). Blank, `X`, and unavailable/deleted keys import without grading; no answer is guessed. A single four-digit year is recognized in year labels; unrecognized years import as unknown with a notice. Options in question text use `(a)`–`(d)`. Quoted commas, escaped quotes, and multiline fields are supported. Invalid rows are skipped by the shared CSV parser. If no valid questions remain, the current bank is preserved. Literal `\n` markers in question text are displayed as line breaks. Published updates replace the cached bank; progress remains linked to unchanged question IDs.
 
 ## Validation
 
@@ -46,7 +46,7 @@ Run `python3 tests/formatting_smoke.py` against the development server to check 
 
 ## Focused practice
 
-New browsers start with an import screen; there is no demo loader or automatic sample bank. Existing saved questions and progress are retained. Banks display 20 questions per page; changing filters starts at the first page. Use **Unanswered** to work through new questions or **Review mistakes** to revisit incorrect answers. View results refresh when you change filters; the current question stays visible after answering so you can review its feedback.
+New browsers load the published question bank automatically. Existing browsers show their cached bank while checking for an updated published CSV. Saved answers and notes for unchanged question IDs are retained. Banks display 20 questions per page; changing filters starts at the first page. Use **Unanswered** to work through new questions or **Review mistakes** to revisit incorrect answers. View results refresh when you change filters; the current question stays visible after answering so you can review its feedback.
 
 An answer locks after selection. **Try again** clears that question's current answer and reveal state while retaining notes and bookmarks. Accuracy reflects current graded answers, while saved practice results remain snapshots. Questions without an answer key stay ungraded.
 
@@ -78,10 +78,12 @@ Follow-up questions send the complete successful conversation for the current ex
 
 ## Publishing and question storage
 
-You import a CSV only once on the same browser and website address. The bank, answers, bookmarks and notes are saved in localStorage. Private browsing, clearing site data, changing domains, and using another device do not share that storage. Save important notes elsewhere before clearing browser data.
-
-To offer questions immediately to every visitor, replace `data/questions.csv` with a bank you are allowed to publish, then deploy it beside `index.html`. The published bank currently contains 1,500 questions; eight entries have no official answer key and remain ungraded. New visitors load the published bank automatically and cache it locally. Existing personal banks take priority; updating the published CSV does not overwrite them. Existing users can open **Question bank tools → Use latest published questions** to update their saved bank. Personal CSV import remains in that collapsed section. A failed download leaves CSV import available.
+The site loads `data/questions.csv` automatically on every visit and caches it for future visits. Update that file in the repository to publish revised questions; visitors do not manage CSV files. There are no import or bank-management controls. Saved answers, bookmarks and notes remain linked to unchanged question IDs. Private browsing, clearing site data, changing domains and switching devices do not share local progress.
 
 For an initial public release, static hosting such as GitHub Pages can serve these files. Each user connects their own AI key. Do not put your paid key in frontend code or the published CSV. The Python server is a development tool, not a public AI backend. If you want to provide AI using your own account, add an authenticated backend, per-user quotas/rate limits and spending controls first.
 
 Accounts plus a database are the next step for automatic progress/notes synchronization across devices. A downloadable study backup is also a useful future addition. Current local storage does not provide either capability. Chat history remains limited to the current page session.
+
+## Practice timer
+
+The compact practice header includes an optional session timer. Start it when ready; it counts distinct questions answered while running and shows elapsed minutes/seconds and average time per question. Retrying the same question does not increase the count. Pause excludes breaks; switching away from the tab pauses automatically. Refresh restores the session paused in the same tab. Reset clears only timing and its question count, never study progress. The timer is a practice aid, not an exam enforcement clock. `tests/timer_smoke.py` checks these controls and supports Chromium/WebKit.

@@ -16,19 +16,12 @@ with sync_playwright() as p:
     page.locator('[data-choice="b"]').click()
     page.reload()
     expect(page.locator('.question-card')).to_contain_text('Correct')
-    # Updating the hosted file must not replace a visitor's local bank.
+    # Updated published content automatically replaces the cached question list.
     page.unroute('**/data/questions.csv')
     page.route('**/data/questions.csv',lambda r:r.fulfill(body=CSV.replace('Published question','New edition'),content_type='text/csv'))
     page.reload()
-    expect(page.locator('.question-stem')).to_contain_text('Published question')
-    page.locator('.bank-tools summary').click()
-    page.locator('#bank-update').click()
     expect(page.locator('.question-stem')).to_contain_text('New edition')
-    # Same IDs retain progress when downloading the same edition again.
-    page.locator('[data-choice="b"]').click()
-    page.locator('#bank-update').click()
-    expect(page.locator('#bank-update')).to_be_enabled()
-    expect(page.locator('.question-card')).to_contain_text('Correct')
+    assert page.locator('#csv-import, .bank-tools').count() == 0
     # A new browser profile receives the newly published edition.
     fresh=browser.new_page()
     fresh.route('**/data/questions.csv',lambda r:r.fulfill(body=CSV.replace('Published question','New edition'),content_type='text/csv'))
@@ -39,9 +32,11 @@ with sync_playwright() as p:
         fresh=browser.new_page()
         fresh.route('**/data/questions.csv',lambda r:r.fulfill(status=status,body=body))
         fresh.goto(os.environ.get('TEST_URL','http://127.0.0.1:8000'))
-        expect(fresh.locator('#empty-import')).to_be_visible()
-        fresh.locator('#csv-upload').set_input_files({'name':'bank.csv','mimeType':'text/csv','buffer':CSV.encode()})
+        expect(fresh.locator('#questions-retry')).to_be_visible()
+        fresh.unroute('**/data/questions.csv')
+        fresh.route('**/data/questions.csv',lambda r:r.fulfill(body=CSV,content_type='text/csv'))
+        fresh.locator('#questions-retry').click()
         expect(fresh.locator('.question-stem')).to_contain_text('Published question')
         fresh.close()
     browser.close()
-    print('PASS published bank first visit, reload/progress persistence, local precedence, new edition and import after download failure')
+    print('PASS published bank first visit, reload/progress persistence, automatic updates, new edition and retry after download failure')

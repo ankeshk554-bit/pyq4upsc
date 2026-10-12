@@ -3,6 +3,11 @@ import csv
 import io
 import os
 from playwright.sync_api import sync_playwright
+def publish(page, file):
+ page.unroute('**/data/questions.csv')
+ page.route('**/data/questions.csv',lambda r:r.fulfill(body=file['buffer'],content_type='text/csv'))
+ page.evaluate('loadPublishedBank()')
+
 with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page()
@@ -11,11 +16,11 @@ with sync_playwright() as p:
     page.goto(os.environ.get('TEST_URL','http://127.0.0.1:8000'))
     assert page.locator('#sample-load').count()==0
     assert page.locator('.question-card').count()==0
-    assert page.locator('#empty-import').is_visible()
+    assert page.locator('#questions-retry').is_visible()
     csvfile=io.StringIO();writer=csv.writer(csvfile)
     writer.writerow(['Question','Subject','Year','Official Answer Key'])
     for i in range(45): writer.writerow([f'Practice question {i+1}? (a) One (b) Two','Polity',2024,'b'])
-    page.locator('#csv-upload').set_input_files({'name':'bank.csv','mimeType':'text/csv','buffer':csvfile.getvalue().encode()})
+    publish(page, {'name':'bank.csv','mimeType':'text/csv','buffer':csvfile.getvalue().encode()})
     page.wait_for_function('allQuestions.length===45')
     assert page.locator('.question-card').count()==20
     page.locator('[data-page="next"]').first.click()

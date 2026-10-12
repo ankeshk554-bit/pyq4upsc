@@ -40,9 +40,6 @@
     .brand-mark { display:grid; place-items:center; height:34px; width:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-size:22px; }
     .sidebar-section { border-top:1px solid var(--border); margin-top:24px; padding-top:22px; }
     .sidebar-section h2 { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:0 0 16px; }
-    .bank-tools { margin:16px 0; font-size:12px; }
-    .bank-tools summary { cursor:pointer; padding:12px 0; }
-    .bank-tools p { line-height:1.6; }
     .sidebar .toolbar { display:flex; gap:8px; margin:12px 0; }
     .sidebar .toolbar button { flex:1; padding:9px 6px; font-size:12px; }
     .filter-label { font-size:11px; color:var(--muted); margin:20px 0 9px; }
@@ -59,10 +56,6 @@
     .sidebar-backdrop { position:fixed; inset:0; z-index:39; background:#0008; border:0; border-radius:0; }
     .sidebar-backdrop:hover { background:#0008; }
     .topbar { position:sticky; top:0; z-index:10; background:var(--bg); }
-    .study-header { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:38px 0 30px; }
-    .study-header h1 { font-family:Georgia,"Times New Roman",serif; font-weight:400; font-size:clamp(30px,3.4vw,48px); line-height:1.12; letter-spacing:-1.7px; margin:12px 0; }
-    .study-header p { color:var(--muted); font-size:13px; line-height:1.7; max-width:410px; margin:0; }
-    .study-symbol { font-family:Georgia,serif; color:var(--accent); font-size:90px; line-height:1; opacity:.8; padding:0 10px; }
     .workspace-bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
     .stats { display:flex; flex-wrap:wrap; gap:8px; }
     #stats-bar { gap:24px; }
@@ -198,7 +191,6 @@
     }
     @media(max-width:760px) {
       .main { padding:0 18px 30px; } .topbar { min-height:65px; } .breadcrumb { display:none; }
-      .study-header { padding:26px 0; } .study-header h1 { font-size:36px; } .study-symbol { display:none; }
       .question-card { padding:20px 16px; } .question-stem { font-size:15px; }
       .question-card .actions [data-action="explain"] { margin-left:0; } .workspace-bar > button { font-size:11px; }
     }
@@ -209,6 +201,16 @@
       #ai-active-connection { max-width:125px; } #ai-title { font-size:14px; }
       .tutor-header { padding-left:14px; padding-right:14px; }
     }
+    .practice-heading { margin:24px 0 20px; }
+    .practice-heading h1 { font-size:28px; margin:0 0 6px; letter-spacing:-.6px; }
+    .practice-heading p { margin:0; color:var(--muted); font-size:13px; }
+    .session-bar { display:flex; flex-wrap:wrap; align-items:center; gap:18px 28px; padding:20px; border:1px solid var(--border); border-radius:14px; background:var(--panel,var(--bg)); margin-bottom:20px; }
+    .session-bar > div:not(.session-actions) { display:grid; gap:7px; }
+    .session-bar span { font-size:11px; }
+    .session-bar strong { font-size:22px; font-variant-numeric:tabular-nums; }
+    .session-actions { display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; }
+    .session-bar p { flex-basis:100%; margin:0; font-size:11px; line-height:1.6; }
+    @media(max-width:600px) { .session-bar { gap:16px; padding:16px; } .session-actions { margin-left:0; width:100%; } .session-actions button { flex:1; } .session-bar strong { font-size:20px; } }
     @media(prefers-reduced-motion:reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
   </style>
 </head>
@@ -218,7 +220,7 @@
     <aside id="question-sidebar" class="sidebar" aria-label="Question filters and progress">
       <div class="sidebar-brand"><div class="brand"><span class="brand-mark" aria-hidden="true">◈</span>UPSC Vault</div><button id="sidebar-close" class="icon-button" type="button" aria-label="Hide sidebar">×</button></div>
       <span class="eyebrow">Your question library</span>
-      <details class="bank-tools"><summary>Question bank tools</summary><p class="muted">Replace your question list with the latest published bank or your own CSV. Notes and answers for unchanged questions are kept.</p><div class="toolbar"><button id="bank-update" type="button">Use latest published questions</button></div><div class="toolbar"><button id="csv-import" type="button">Import personal CSV</button><input id="csv-upload" class="hidden" type="file" accept=".csv" /></div></details>
+
       <section class="sidebar-section"><h2>Find your focus</h2>
         <input id="search-input" type="search" placeholder="Search questions…" aria-label="Search questions" />
         <div class="toolbar"><button id="marked-filter" type="button">Marked</button><button id="notes-filter" type="button">With notes</button></div>
@@ -234,10 +236,17 @@
         <button id="filters-toggle" class="mobile-filters" aria-expanded="false" aria-controls="question-sidebar" aria-label="Toggle question filters">☰ Filters</button>
         <div class="topbar-actions"><button id="theme-toggle" class="quiet" aria-label="Toggle theme">◐ Theme</button><button class="ai-settings-open" type="button">⚙︎ AI settings</button></div>
       </nav>
-      <header class="study-header"><div><span class="eyebrow">One question. A deeper understanding.</span><h1>Make room for<br>your next breakthrough.</h1><p>A focused space for previous-year questions, thoughtful revision, and a little help when you need it.</p></div><div class="study-symbol" aria-hidden="true">✳</div></header>
+      <header class="practice-heading"><h1>Prelims practice</h1><p>Previous-year questions</p></header>
+      <section class="session-bar" aria-label="Practice timer">
+        <div><span class="muted">Session time</span><strong id="session-time">00:00</strong></div>
+        <div><span class="muted">Answered this session</span><strong id="session-count">0</strong></div>
+        <div><span class="muted">Average / question</span><strong id="session-pace">—</strong></div>
+        <div class="session-actions"><button id="session-toggle" type="button" class="primary">Start timer</button><button id="session-reset" type="button">Reset timer</button></div>
+        <p id="session-status" class="muted">Start when you’re ready. Timing pauses when you leave this tab.</p>
+      </section>
       <div id="notice" role="status" class="hidden"></div>
       <div class="workspace-bar"><div id="stats-bar" class="stats"></div><button id="save-session">Save practice result</button></div>
-      <div class="study-tools"><label for="study-view">Practice view</label><select id="study-view"><option value="all">All questions</option><option value="unanswered">Unanswered</option><option value="mistakes">Review mistakes</option></select><p class="muted">Work through a small set, then revisit what needs practice.</p></div>
+      <div class="study-tools"><label for="study-view">Practice view</label><select id="study-view"><option value="all">All questions</option><option value="unanswered">Unanswered</option><option value="mistakes">Review mistakes</option></select></div>
       <nav class="pagination" aria-label="Question pages"></nav>
       <div id="questions" class="questions"></div>
       <nav class="pagination" aria-label="Question pages at bottom"></nav>
@@ -481,8 +490,8 @@
         nav.innerHTML = currentSet.length > PAGE_SIZE ? `<button type="button" data-page="prev" ${pageIndex === 0 ? 'disabled' : ''}>Previous</button><span>${start + 1}–${Math.min(start + PAGE_SIZE, currentSet.length)} of ${currentSet.length} · Page ${pageIndex + 1}/${pages}</span><button type="button" data-page="next" ${pageIndex === pages - 1 ? 'disabled' : ''}>Next</button>` : '';
       });
       if (!allQuestions.length) {
-        container.innerHTML = '<div class="empty"><h2>Start with your question bank.</h2><p>Import your CSV to begin practicing. Your answers, bookmarks, and notes will be saved in this browser.</p><button id="empty-import" class="primary" type="button">Import question CSV</button><p>Columns: Question, Subject, Year, Official Answer Key. Missing answer keys are kept without grading.</p></div>';
-        document.getElementById('empty-import').onclick = () => document.getElementById('csv-upload').click();
+        container.innerHTML = '<div class="empty"><h2>Your questions will appear here</h2><p>Loading the question bank…</p><button id="questions-retry" type="button">Retry loading</button></div>';
+        document.getElementById('questions-retry').onclick = () => loadPublishedBank();
         return;
       }
       if (!currentSet.length) {
@@ -497,8 +506,8 @@
     function updateStatsBar() {
       const root = document.getElementById('stats-bar');
       root.innerHTML = `
-        <div class="stat"><strong>${allQuestions.length}</strong><small>Bank</small></div>
-        <div class="stat"><strong>${currentSet.length}</strong><small>Matching</small></div>
+        <div class="stat"><strong>${allQuestions.length}</strong><small>Questions</small></div>
+        <div class="stat"><strong>${currentSet.length}</strong><small>In this view</small></div>
         <div class="stat"><strong>${allQuestions.filter(q => progress[q.id]?.selected !== undefined).length}</strong><small>Answered</small></div>
       `;
     }
@@ -626,6 +635,7 @@
           if (!question) return;
           progress[qid] = progress[qid] || {};
           progress[qid].selected = choice;
+          if (sessionStarted !== null) { sessionAnswers.add(qid); saveTimer(); renderTimer(); }
           if (/^[a-d]$/.test(question.ans)) progress[qid].correct = choice === question.ans;
           else delete progress[qid].correct;
           progress[qid].updatedAt = Date.now();
@@ -705,27 +715,6 @@
         applyFilters();
       });
 
-      document.getElementById('bank-update').onclick = () => loadPublishedBank(true);
-      document.getElementById('csv-import').addEventListener('click', () => {
-        document.getElementById('csv-upload').click();
-      });
-
-      document.getElementById('csv-upload').addEventListener('change', async event => {
-        const file = event.target.files[0];
-        if (!file) return;
-        try {
-          const {bank, issues} = readQuestionCSV(await file.text());
-          if (!bank.length) throw new Error(`No valid questions found. ${issues.slice(0, 5).join('; ')}`);
-          allQuestions = bank;
-          studyView = 'all'; document.getElementById('study-view').value = 'all';
-          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
-          document.getElementById('search-input').value = '';
-          const saved = saveBank(); applyFilters(); buildStatsSummary();
-          notify(`Imported ${allQuestions.length} questions.${saved ? '' : ' Browser storage is full or unavailable: this bank is available only until you leave this page. Keep your CSV.'}${issues.length ? ` ${issues.length} import notices: ${issues.slice(0, 8).join('; ')}${issues.length > 8 ? '; see downloaded report for all rows.' : ''}` : ''}`);
-          if (issues.length) { const report = new Blob([issues.join('\n')], {type:'text/plain'}); const url = URL.createObjectURL(report); const link = document.createElement('a'); link.href = url; link.download = 'csv-import-report.txt'; link.textContent = 'Download full import report'; document.getElementById('notice').append(' ', link); link.onclick = () => setTimeout(() => URL.revokeObjectURL(url), 60000); }
-        } catch (error) { notify(error.message); }
-        event.target.value = '';
-      });
     }
 
     function readQuestionCSV(text) {
@@ -749,29 +738,18 @@
       return {bank:[...new Map(bank.map(q => [q.id, q])).values()], issues};
     }
 
-    async function loadPublishedBank(manual = false) {
-      if (allQuestions.length && !manual) return;
-      const initialBank = allQuestions;
-      const button = document.getElementById('bank-update'); button.disabled = true;
+    async function loadPublishedBank() {
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
       try {
-        const response = await fetch('data/questions.csv', {signal:controller.signal});
-        if (response.status === 404) { if (manual) notify('No published question bank is available yet. Your current questions are unchanged.'); return; }
-        if (!response.ok) throw new Error('Could not load the published question bank. Reload to retry, or import a CSV.');
-        const {bank, issues} = readQuestionCSV(await response.text());
-        // A personal import that finishes during this fetch always takes priority.
-        if (allQuestions !== initialBank) return;
-        if (!bank.length) { if (manual) notify('The published bank is empty. Your current questions are unchanged.'); return; }
-        if (manual) {
-          studyView = 'all'; document.getElementById('study-view').value = 'all';
-          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
-          document.getElementById('search-input').value = '';
-        }
-        allQuestions = bank; const saved = saveBank(); renderFilters(); applyFilters(); buildStatsSummary();
-        notify(`Loaded ${bank.length} published questions.${saved ? '' : ' Browser storage is unavailable; progress may not survive refresh.'}${issues.length ? ` ${issues.length} import notices; questions without answer keys remain ungraded.` : ''}`);
+        const response = await fetch('data/questions.csv', {signal:controller.signal, cache:'no-cache'});
+        if (!response.ok) throw new Error('Questions could not be loaded. Please reload to try again.');
+        const {bank} = readQuestionCSV(await response.text());
+        if (!bank.length) throw new Error('Questions are not available yet. Please check back soon.');
+        // Published content is authoritative; progress uses stable question IDs.
+        allQuestions = bank; saveBank(); renderFilters(); applyFilters(false); buildStatsSummary();
       } catch (error) {
-        if (manual || !allQuestions.length) notify(error.name === 'AbortError' ? 'Loading the published bank timed out. Reload to retry, or import a CSV.' : error.message);
-      } finally { clearTimeout(timer); button.disabled = false; }
+        if (!allQuestions.length) notify(error.name === 'AbortError' ? 'Loading questions took too long. Please reload to try again.' : error.message);
+      } finally { clearTimeout(timer); }
     }
 
     function notify(message) {
@@ -1194,11 +1172,54 @@
       if (viewport) { viewport.addEventListener('resize', resize); viewport.addEventListener('scroll', resize); }
     }
 
+    let sessionElapsed = 0, sessionStarted = null, sessionAnswers = new Set();
+    function elapsedTime() { return sessionElapsed + (sessionStarted === null ? 0 : performance.now() - sessionStarted); }
+    function formatDuration(ms) {
+      const seconds = Math.floor(ms / 1000);
+      return `${Math.floor(seconds / 60).toString().padStart(2,'0')}:${(seconds % 60).toString().padStart(2,'0')}`;
+    }
+    function saveTimer() {
+      try { sessionStorage.setItem('uv_practice_timer', JSON.stringify({elapsed:elapsedTime(), answers:[...sessionAnswers]})); } catch {}
+    }
+    function renderTimer() {
+      document.getElementById('session-time').textContent = formatDuration(elapsedTime());
+      document.getElementById('session-count').textContent = sessionAnswers.size;
+      document.getElementById('session-pace').textContent = sessionAnswers.size ? formatDuration(elapsedTime() / sessionAnswers.size) : '—';
+      document.getElementById('session-toggle').textContent = sessionStarted !== null ? 'Pause' : sessionElapsed || sessionAnswers.size ? 'Resume' : 'Start timer';
+    }
+    function pauseTimer() {
+      if (sessionStarted === null) return;
+      sessionElapsed = elapsedTime(); sessionStarted = null; saveTimer(); renderTimer();
+      document.getElementById('session-status').textContent = 'Paused. Resume when you’re ready.';
+    }
+    function bindTimer() {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem('uv_practice_timer'));
+        if (saved && Number.isFinite(saved.elapsed) && saved.elapsed >= 0 && Array.isArray(saved.answers)) {
+          sessionElapsed = saved.elapsed; sessionAnswers = new Set(saved.answers.filter(id => typeof id === 'string'));
+          if (sessionElapsed) document.getElementById('session-status').textContent = 'Session restored and paused. Resume when you’re ready.';
+        }
+      } catch {}
+      document.getElementById('session-toggle').onclick = () => {
+        if (sessionStarted !== null) pauseTimer();
+        else { sessionStarted = performance.now(); document.getElementById('session-status').textContent = 'Timing active. Each question counts once while the timer is running.'; renderTimer(); }
+      };
+      document.getElementById('session-reset').onclick = () => {
+        sessionStarted = null; sessionElapsed = 0; sessionAnswers.clear(); saveTimer(); renderTimer();
+        document.getElementById('session-status').textContent = 'Timer reset. Your saved answers and notes are unchanged.';
+      };
+      document.addEventListener('visibilitychange', () => { if (document.hidden) pauseTimer(); });
+      window.addEventListener('pagehide', pauseTimer);
+      setInterval(() => { if (sessionStarted !== null) { renderTimer(); saveTimer(); } }, 1000);
+      renderTimer();
+    }
+
     function boot() {
       loadBank();
       loadProgress();
       loadHistory();
       bindTheme();
+      bindTimer();
       bindFilterEvents();
       bindTutor();
       bindResponsiveLayout();

@@ -1,7 +1,5 @@
 # Published question bank
 
-Replace `questions.csv` with your approved question bank using the same headers as CSV import. The current published file contains 1,500 questions, including eight ungraded entries with X answer keys.
+Update `questions.csv` and deploy it with the website. Visitors load the latest bank automatically on each visit; cached questions remain usable if the download fails. There are no visitor-facing CSV controls. Saved answers and notes are preserved for unchanged question IDs.
 
-Commit this file with the website. New visitors automatically load and cache it. The relative path works on GitHub Pages project sites. Existing browser banks take priority and are not overwritten by website updates; use **Question bank tools → Use latest published questions** to update an existing bank. Answers and notes remain associated with unchanged question IDs.
-
-Everything in this CSV will be publicly downloadable. Publish only content you have permission to distribute. This file contains questions only, never API keys or personal progress.
+Required headers: `Question,Subject,Year,Official Answer Key`. The current bank contains 1,500 questions, including eight ungraded X keys. This public file must contain only content you have permission to distribute, never API keys or personal progress.
