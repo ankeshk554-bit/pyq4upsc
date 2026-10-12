@@ -82,8 +82,18 @@ The site loads `data/questions.csv` automatically on every visit and caches it f
 
 For an initial public release, static hosting such as GitHub Pages can serve these files. Each user connects their own AI key. Do not put your paid key in frontend code or the published CSV. The Python server is a development tool, not a public AI backend. If you want to provide AI using your own account, add an authenticated backend, per-user quotas/rate limits and spending controls first.
 
-Accounts plus a database are the next step for automatic progress/notes synchronization across devices. A downloadable study backup is also a useful future addition. Current local storage does not provide either capability. Chat history remains limited to the current page session.
+Accounts plus a database are the next step for automatic progress/notes synchronization across devices. Backup and restore provide manual transfer now; automatic account-based synchronization is not configured. Chat history remains limited to the current page session.
 
 ## Practice timer
 
 The compact practice header includes an optional session timer. Start it when ready; it counts distinct questions answered while running and shows elapsed minutes/seconds and average time per question. Retrying the same question does not increase the count. Pause excludes breaks; switching away from the tab pauses automatically. Refresh restores the session paused in the same tab. Reset clears only timing and its question count, never study progress. The timer is a practice aid, not an exam enforcement clock. `tests/timer_smoke.py` checks these controls and supports Chromium/WebKit.
+
+## Notes library and portable study backups
+
+Answers, bookmarks and notes save automatically in one versioned local snapshot. The header confirms saving or warns of storage failure. Existing local records migrate after a successful snapshot write. A conflicting write from another tab is blocked: back up that tab and reload before continuing. This protects against silent replacement; it is not collaborative editing. **Save score snapshot** records a result separately from automatic progress saving.
+
+Open **Backup & restore → Download study backup** to download a JSON file with question metadata, answers, notes, image attachments and score history. API keys, AI conversations and timer state are excluded. Transfer the file to another device, select it in **Backup & restore**, review its counts, then choose **Merge backup**. The merge preserves local-only work, chooses newer answer records (local on a tie), combines differing notes, and retains bookmarks from either copy. Backup writes are committed as one storage operation; an invalid file or storage failure leaves the active data unchanged. Validation limits files to 25 MB; browser storage quotas may be smaller. Device clocks influence newer-record selection. This is manual backup transfer, not continuous cloud sync.
+
+**Notes library** provides subject and text filters, adjustable reading sizes and editing. It retains notes for archived questions after bank updates. **Print / Save PDF** opens your device's print flow for the filtered notes, grouped by subject, with question attachments. Choose Save as PDF where supported. **Download Word** creates a `.docx` containing the same filtered question and note text. Word exports reference image attachments; use PDF or the study backup to include those images. No third-party conversion service receives notes. Browser printing and Microsoft Word rendering can vary; exports are tested structurally and against browser print styles.
+
+Run `python3 tests/study_tools_smoke.py` against the server to test backup round-trips, merge preservation, edits, exports, validation and failed storage. It also runs on WebKit in CI.
