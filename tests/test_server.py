@@ -103,7 +103,8 @@ class TutorTests(unittest.TestCase):
     def test_published_bank_is_public(self):
         with urlopen(self.url+'/data/questions.csv') as response:
             self.assertEqual(response.status, 200)
-            self.assertTrue(response.read().startswith(b'Question,Subject,Year,Official Answer Key'))
+            header = response.read().decode('utf-8-sig').splitlines()[0].split(',')
+            self.assertTrue({'Question', 'Subject', 'Year', 'Official Answer Key'}.issubset(header))
 
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):

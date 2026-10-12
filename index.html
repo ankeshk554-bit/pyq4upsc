@@ -40,6 +40,9 @@
     .brand-mark { display:grid; place-items:center; height:34px; width:34px; border-radius:10px; background:var(--accent); color:var(--accent-ink); font-size:22px; }
     .sidebar-section { border-top:1px solid var(--border); margin-top:24px; padding-top:22px; }
     .sidebar-section h2 { font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); margin:0 0 16px; }
+    .bank-tools { margin:16px 0; font-size:12px; }
+    .bank-tools summary { cursor:pointer; padding:12px 0; }
+    .bank-tools p { line-height:1.6; }
     .sidebar .toolbar { display:flex; gap:8px; margin:12px 0; }
     .sidebar .toolbar button { flex:1; padding:9px 6px; font-size:12px; }
     .filter-label { font-size:11px; color:var(--muted); margin:20px 0 9px; }
@@ -215,7 +218,7 @@
     <aside id="question-sidebar" class="sidebar" aria-label="Question filters and progress">
       <div class="sidebar-brand"><div class="brand"><span class="brand-mark" aria-hidden="true">◈</span>UPSC Vault</div><button id="sidebar-close" class="icon-button" type="button" aria-label="Hide sidebar">×</button></div>
       <span class="eyebrow">Your question library</span>
-      <div class="toolbar"><button id="csv-import" type="button" class="primary">Import CSV</button><input id="csv-upload" class="hidden" type="file" accept=".csv" /></div>
+      <details class="bank-tools"><summary>Question bank tools</summary><p class="muted">Replace your question list with the latest published bank or your own CSV. Notes and answers for unchanged questions are kept.</p><div class="toolbar"><button id="bank-update" type="button">Use latest published questions</button></div><div class="toolbar"><button id="csv-import" type="button">Import personal CSV</button><input id="csv-upload" class="hidden" type="file" accept=".csv" /></div></details>
       <section class="sidebar-section"><h2>Find your focus</h2>
         <input id="search-input" type="search" placeholder="Search questions…" aria-label="Search questions" />
         <div class="toolbar"><button id="marked-filter" type="button">Marked</button><button id="notes-filter" type="button">With notes</button></div>
@@ -702,6 +705,7 @@
         applyFilters();
       });
 
+      document.getElementById('bank-update').onclick = () => loadPublishedBank(true);
       document.getElementById('csv-import').addEventListener('click', () => {
         document.getElementById('csv-upload').click();
       });
@@ -745,21 +749,29 @@
       return {bank:[...new Map(bank.map(q => [q.id, q])).values()], issues};
     }
 
-    async function loadPublishedBank() {
-      if (allQuestions.length) return;
+    async function loadPublishedBank(manual = false) {
+      if (allQuestions.length && !manual) return;
+      const initialBank = allQuestions;
+      const button = document.getElementById('bank-update'); button.disabled = true;
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
       try {
         const response = await fetch('data/questions.csv', {signal:controller.signal});
-        if (response.status === 404) return;
+        if (response.status === 404) { if (manual) notify('No published question bank is available yet. Your current questions are unchanged.'); return; }
         if (!response.ok) throw new Error('Could not load the published question bank. Reload to retry, or import a CSV.');
         const {bank, issues} = readQuestionCSV(await response.text());
         // A personal import that finishes during this fetch always takes priority.
-        if (allQuestions.length || !bank.length) return;
+        if (allQuestions !== initialBank) return;
+        if (!bank.length) { if (manual) notify('The published bank is empty. Your current questions are unchanged.'); return; }
+        if (manual) {
+          studyView = 'all'; document.getElementById('study-view').value = 'all';
+          activeYears.clear(); activeSubjects.clear(); filterMarkedOnly = false; filterNotesOnly = false;
+          document.getElementById('search-input').value = '';
+        }
         allQuestions = bank; const saved = saveBank(); renderFilters(); applyFilters(); buildStatsSummary();
         notify(`Loaded ${bank.length} published questions.${saved ? '' : ' Browser storage is unavailable; progress may not survive refresh.'}${issues.length ? ` ${issues.length} import notices; questions without answer keys remain ungraded.` : ''}`);
       } catch (error) {
-        if (!allQuestions.length) notify(error.name === 'AbortError' ? 'Loading the published bank timed out. Reload to retry, or import a CSV.' : error.message);
-      } finally { clearTimeout(timer); }
+        if (manual || !allQuestions.length) notify(error.name === 'AbortError' ? 'Loading the published bank timed out. Reload to retry, or import a CSV.' : error.message);
+      } finally { clearTimeout(timer); button.disabled = false; }
     }
 
     function notify(message) {

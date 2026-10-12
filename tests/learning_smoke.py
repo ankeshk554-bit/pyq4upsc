@@ -7,6 +7,7 @@ with sync_playwright() as p:
     browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
     page = browser.new_page()
     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+    page.route('**/data/questions.csv', lambda r:r.fulfill(status=404))
     page.goto(os.environ.get('TEST_URL','http://127.0.0.1:8000'))
     assert page.locator('#sample-load').count()==0
     assert page.locator('.question-card').count()==0

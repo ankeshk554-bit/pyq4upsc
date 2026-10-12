@@ -21,6 +21,14 @@ with sync_playwright() as p:
     page.route('**/data/questions.csv',lambda r:r.fulfill(body=CSV.replace('Published question','New edition'),content_type='text/csv'))
     page.reload()
     expect(page.locator('.question-stem')).to_contain_text('Published question')
+    page.locator('.bank-tools summary').click()
+    page.locator('#bank-update').click()
+    expect(page.locator('.question-stem')).to_contain_text('New edition')
+    # Same IDs retain progress when downloading the same edition again.
+    page.locator('[data-choice="b"]').click()
+    page.locator('#bank-update').click()
+    expect(page.locator('#bank-update')).to_be_enabled()
+    expect(page.locator('.question-card')).to_contain_text('Correct')
     # A new browser profile receives the newly published edition.
     fresh=browser.new_page()
     fresh.route('**/data/questions.csv',lambda r:r.fulfill(body=CSV.replace('Published question','New edition'),content_type='text/csv'))
