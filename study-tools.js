@@ -196,7 +196,7 @@ function bindStudyTools() {
   document.getElementById('notes-size').onchange=e=>document.getElementById('notes-reader').style.setProperty('--reading-size',`${e.target.value}px`);
   document.getElementById('notes-pdf').onclick=exportPrintNotes;
   document.getElementById('notes-word').onclick=()=>downloadStudyFile(wordDocument(visibleNotes()),'upsc-revision-notes.docx');
-  document.getElementById('backup-open').onclick=()=>document.getElementById('backup-dialog').showModal();
+  document.getElementById('backup-open').onclick=()=>{ document.getElementById('ai-settings-dialog').close(); document.getElementById('backup-dialog').showModal(); };
   document.getElementById('backup-download').onclick=()=>{
     stampProgress();downloadStudyFile(new Blob([JSON.stringify(studySnapshot(),null,2)],{type:'application/json'}),`upsc-study-${new Date().toISOString().slice(0,10)}.json`);
     document.getElementById('backup-last').textContent='Backup download requested. Keep the file somewhere you can access on your other device.';

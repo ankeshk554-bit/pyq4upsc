@@ -26,7 +26,9 @@ with sync_playwright() as p:
  assert page.locator('.question-card').count()==0
  page.locator('#reset-filters').click()
  before=page.locator('body').evaluate('(e)=>getComputedStyle(e).backgroundColor')
- page.locator('#theme-toggle').click()
+ page.locator('.topbar .ai-settings-open').click()
+ page.locator('#appearance-theme').select_option('nord')
+ page.locator('#ai-settings-done').click()
  assert before!=page.locator('body').evaluate('(e)=>getComputedStyle(e).backgroundColor')
  page.locator('[data-action="toggle-note"][data-qid="demo-q-1"]').click()
  page.locator('[data-note-id="demo-q-1"]').fill('Remember Article 17')
