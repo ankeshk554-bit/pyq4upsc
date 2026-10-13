@@ -27,7 +27,7 @@ with sync_playwright() as p:
     assert abs(page.locator('#ai-dialog').bounding_box()['width']-524)<2
     page.reload(); page.locator('[data-action="explain"]').first.click()
     assert abs(page.locator('#ai-dialog').bounding_box()['width']-524)<2
-    page.locator('#ai-dialog .ai-settings-open').click()
+    page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
     page.locator('#ai-provider').select_option('openrouter')
     page.wait_for_function('document.querySelectorAll("#ai-model option").length===2')
     page.locator('#ai-include-paid').check()
@@ -67,7 +67,7 @@ with sync_playwright() as p:
     page.locator('#ai-send').click()
     page.wait_for_function('document.querySelector(".ai-message.error")?.textContent.includes("output allowance")')
     assert page.locator('#ai-question').input_value()=='Explain more'
-    page.locator('#ai-dialog .ai-settings-open').click()
+    page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
     page.locator('#ai-model').select_option('openai/gpt-4o')
     page.locator('#ai-settings-done').click()
     page.unroute('https://openrouter.ai/api/v1/chat/completions')

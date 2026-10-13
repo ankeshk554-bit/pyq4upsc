@@ -20,7 +20,7 @@ with sync_playwright() as p:
         page.goto(os.environ.get('TEST_URL','http://127.0.0.1:8000'))
         page.locator('[data-action="explain"]').first.click()
         if direct:
-            page.locator('#ai-dialog .ai-settings-open').click()
+            page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
             page.locator('#ai-provider').select_option('deepseek')
             page.locator('#ai-key').fill('synthetic-test-key')
             page.locator('#ai-settings-form button[type="submit"]').click()

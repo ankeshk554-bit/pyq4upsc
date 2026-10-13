@@ -23,6 +23,7 @@ with sync_playwright() as p:
     page.locator('.topbar .ai-settings-open').click()
     for control, value in [('text-size','1.3'),('text-style','serif'),('text-spacing','2.1'),('notes-size','23'),('appearance-theme','paper')]:
         expect(page.locator('#'+control)).to_have_value(value)
+    page.locator('#settings-tab-data').click()
     page.locator('#backup-open').click()
     expect(page.locator('#backup-dialog')).to_be_visible()
     expect(page.locator('#ai-settings-dialog')).not_to_be_visible()

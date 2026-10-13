@@ -11,15 +11,15 @@ with sync_playwright() as p:
     assert page.locator('.question-card').first.bounding_box()['x'] + page.locator('.question-card').first.bounding_box()['width'] <= page.locator('#ai-dialog').bounding_box()['x']
     assert page.locator('#ai-dialog #ai-provider').count() == 0
     assert page.locator('#ai-welcome').is_visible()
-    page.locator('#ai-dialog .ai-settings-open').click()
+    page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
     assert page.locator('#ai-settings-dialog').evaluate('(e)=>e.matches(":modal")')
     page.keyboard.press('Escape')
     assert not page.locator('#ai-settings-dialog').is_visible()
-    assert page.locator('#ai-dialog .ai-settings-open').evaluate('(e)=>e===document.activeElement')
+    assert page.locator('#ai-dialog .tutor-controls .ai-settings-open').evaluate('(e)=>e===document.activeElement')
     page.set_viewport_size({'width':390,'height':844})
     page.wait_for_function('parseFloat(document.documentElement.style.getPropertyValue("--visual-height")) <= 844')
     assert page.locator('#ai-send').bounding_box()['y'] + page.locator('#ai-send').bounding_box()['height'] <= 844
-    page.locator('#ai-dialog .ai-settings-open').click()
+    page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
     assert page.locator('#ai-settings-dialog').bounding_box()['width'] <= 390
     page.locator('#ai-key').fill('unsubmitted-test-key')
     page.keyboard.press('Escape')

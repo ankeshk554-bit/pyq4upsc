@@ -7,12 +7,22 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent
+PROVIDERS = {
+    'openai': ('https://api.openai.com/v1/chat/completions', 'OPENAI_API_KEY', 'gpt-4o-mini'),
+    'deepseek': ('https://api.deepseek.com/chat/completions', 'DEEPSEEK_API_KEY', 'deepseek-chat'),
+    'openrouter': ('https://openrouter.ai/api/v1/chat/completions', 'OPENROUTER_API_KEY', 'openrouter/free'),
+}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
 
     def do_GET(self):
+        if self.path.split('?')[0] == '/api/status':
+            provider = PROVIDERS.get(os.environ.get('AI_PROVIDER', 'openai').lower())
+            configured = bool(provider and (os.environ.get(provider[1]) or os.environ.get('AI_API_KEY')))
+            self.respond(200, {'configured': configured})
+            return
         # Serve only public website assets, never source credentials or Git metadata.
         if self.path.split('?')[0] not in ('/', '/index.html', '/favicon.ico', '/data/questions.csv', '/study-tools.js'):
             self.send_error(404)
@@ -62,14 +72,9 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, TypeError, json.JSONDecodeError):
             self.respond(400, {'error': 'Invalid request. Check the question and start a new conversation if it is too long.'}); return
         provider = os.environ.get('AI_PROVIDER', 'openai').lower()
-        providers = {
-            'openai': ('https://api.openai.com/v1/chat/completions', 'OPENAI_API_KEY', 'gpt-4o-mini'),
-            'deepseek': ('https://api.deepseek.com/chat/completions', 'DEEPSEEK_API_KEY', 'deepseek-chat'),
-            'openrouter': ('https://openrouter.ai/api/v1/chat/completions', 'OPENROUTER_API_KEY', 'openrouter/free'),
-        }
-        if provider not in providers:
+        if provider not in PROVIDERS:
             self.respond(503, {'error':'Unsupported AI_PROVIDER. Use openai, deepseek, or openrouter.'}); return
-        endpoint, key_name, default_model = providers[provider]
+        endpoint, key_name, default_model = PROVIDERS[provider]
         key = os.environ.get(key_name) or os.environ.get('AI_API_KEY')
         if not key:
             self.respond(503, {'error': 'AI tutor is not connected yet. Configure the server’s AI_API_KEY to enable explanations. Your practice and notes still work.'}); return

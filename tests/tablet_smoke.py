@@ -34,7 +34,7 @@ with sync_playwright() as p:
             assert card['x']+card['width']<=tutor['x'],(name,width,'overlap')
         assert page.locator('#ai-close').bounding_box()['width']>=44
         assert page.locator('#ai-question').evaluate('(e)=>getComputedStyle(e).fontSize')=='16px'
-        page.locator('#ai-dialog .ai-settings-open').tap()
+        page.locator('#ai-dialog .tutor-controls .ai-settings-open').tap()
         expect(page.locator('#ai-settings-dialog')).to_be_visible()
         page.locator('#ai-provider').select_option('deepseek')
         page.locator('#ai-key').fill('synthetic-tablet-key');page.locator('#ai-remember').check()
@@ -43,6 +43,7 @@ with sync_playwright() as p:
         page.reload()
         expect(page.locator('#question-sidebar')).to_be_hidden()
         page.locator('.topbar .ai-settings-open').tap()
+        page.locator('#settings-tab-ai').click()
         expect(page.locator('#ai-provider')).to_have_value('deepseek')
         expect(page.locator('#ai-remember')).to_be_checked()
         page.locator('#ai-settings-done').tap()

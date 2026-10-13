@@ -11,7 +11,7 @@ with sync_playwright() as p:
     page.locator('[data-action="explain"]').first.click()
     def open_settings():
         if not page.locator('#ai-settings-dialog').is_visible():
-            page.locator('#ai-dialog .ai-settings-open').click()
+            page.locator('#ai-dialog .tutor-controls .ai-settings-open').click()
     open_settings()
     open_settings()
     page.locator('#ai-provider').select_option('deepseek')

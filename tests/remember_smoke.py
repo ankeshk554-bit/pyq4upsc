@@ -8,6 +8,7 @@ with sync_playwright() as p:
     page.goto(os.environ.get('TEST_URL','http://127.0.0.1:8000'))
     def settings():
         page.locator('.topbar .ai-settings-open').click()
+        page.locator('#settings-tab-ai').click()
     settings()
     page.locator('#ai-provider').select_option('deepseek')
     page.locator('#ai-model').select_option('deepseek-reasoner')

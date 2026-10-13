@@ -14,6 +14,7 @@ with sync_playwright() as p:
  page.locator('#save-session').click()
  page.evaluate("localStorage.setItem('uv_ai_connection_v1_openai',JSON.stringify({key:'secret-must-not-export',model:'gpt-4o'}))")
  page.locator('.topbar .ai-settings-open').click()
+ page.locator('#settings-tab-data').click()
  page.locator('#backup-open').click()
  with page.expect_download() as download:page.locator('#backup-download').click()
  file='/tmp/study-backup.json';download.value.save_as(file);data=json.loads(Path(file).read_text())
@@ -24,6 +25,7 @@ with sync_playwright() as p:
  other=b.new_page();seed_bank(other);other.goto(URL)
  other.locator('[data-action="toggle-note"]').first.click();other.locator('[data-note-id]').first.fill('Local note to preserve')
  other.locator('.topbar .ai-settings-open').click()
+ other.locator('#settings-tab-data').click()
  other.locator('#backup-open').click();other.locator('#backup-file').set_input_files(file)
  expect(other.locator('#backup-merge')).to_be_enabled();other.locator('#backup-merge').click()
  expect(other.locator('#backup-preview')).to_contain_text('merged and saved')
@@ -52,6 +54,7 @@ with sync_playwright() as p:
  assert 'Edited revision' in other.locator('#notes-print').inner_text();other.emulate_media(media='screen')
  # Invalid backup and failed storage must leave existing state intact.
  other.locator('.topbar .ai-settings-open').click()
+ other.locator('#settings-tab-data').click()
  other.locator('#backup-open').click()
  other.locator('#backup-file').set_input_files({'name':'bad.json','mimeType':'application/json','buffer':b'{"version":900}'})
  expect(other.locator('#backup-merge')).to_be_disabled()

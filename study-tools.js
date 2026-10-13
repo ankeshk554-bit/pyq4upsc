@@ -20,7 +20,7 @@ function studySnapshot() {
 }
 function savedStatus(ok) {
   const node = document.getElementById('save-status');
-  node.textContent = ok ? 'Saved on this device · backup to transfer' : 'Not saved — download a backup now';
+  node.textContent = ok ? 'Saved on this device · Back up' : 'Not saved — download a backup now';
   node.classList.toggle('unsaved', !ok);
 }
 function persistStudy() {
@@ -196,7 +196,16 @@ function bindStudyTools() {
   document.getElementById('notes-size').onchange=e=>document.getElementById('notes-reader').style.setProperty('--reading-size',`${e.target.value}px`);
   document.getElementById('notes-pdf').onclick=exportPrintNotes;
   document.getElementById('notes-word').onclick=()=>downloadStudyFile(wordDocument(visibleNotes()),'upsc-revision-notes.docx');
-  document.getElementById('backup-open').onclick=()=>{ document.getElementById('ai-settings-dialog').close(); document.getElementById('backup-dialog').showModal(); };
+  let backupReturnFocus;
+  const openBackup = event => {
+    const settings = document.getElementById('ai-settings-dialog');
+    backupReturnFocus = settings.open ? document.querySelector('.topbar .ai-settings-open') : event.currentTarget;
+    if (settings.open) settings.close();
+    document.getElementById('backup-dialog').showModal();
+  };
+  document.getElementById('backup-open').onclick = openBackup;
+  document.getElementById('backup-status').onclick = openBackup;
+  document.getElementById('backup-dialog').addEventListener('close', () => backupReturnFocus?.focus());
   document.getElementById('backup-download').onclick=()=>{
     stampProgress();downloadStudyFile(new Blob([JSON.stringify(studySnapshot(),null,2)],{type:'application/json'}),`upsc-study-${new Date().toISOString().slice(0,10)}.json`);
     document.getElementById('backup-last').textContent='Backup download requested. Keep the file somewhere you can access on your other device.';

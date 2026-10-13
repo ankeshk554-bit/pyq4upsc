@@ -36,6 +36,19 @@ class TutorTests(unittest.TestCase):
             status, body = self.request(self.payload())
         self.assertEqual(status, 503); self.assertIn('not connected', body['error'])
 
+    def test_configuration_status_does_not_expose_or_use_credentials(self):
+        cases = [({}, False), ({'AI_API_KEY': 'synthetic-key'}, True),
+                 ({'AI_PROVIDER': 'deepseek', 'DEEPSEEK_API_KEY': 'synthetic-key'}, True),
+                 ({'AI_PROVIDER': 'deepseek', 'OPENAI_API_KEY': 'wrong-provider'}, False),
+                 ({'AI_PROVIDER': 'invalid', 'AI_API_KEY': 'synthetic-key'}, False)]
+        for values, configured in cases:
+            with self.subTest(values=list(values)):
+                with patch.dict(server.os.environ, values, clear=True), patch.object(server, 'urlopen') as provider:
+                    with urlopen(self.url + '/api/status') as response:
+                        self.assertEqual(response.headers['Cache-Control'], 'no-store')
+                        self.assertEqual(json.load(response), {'configured': configured})
+                    provider.assert_not_called()
+
     def test_invalid_input(self):
         data = self.payload(); data['messages'][0]['role'] = 'system'
         self.assertEqual(self.request(data)[0], 400)
