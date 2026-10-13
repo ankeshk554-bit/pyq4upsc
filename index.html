@@ -337,6 +337,49 @@
       .appearance-grid { grid-template-columns:1fr; }
       .topbar-actions button { padding:8px; }
     }
+    /* The compact timer follows the navigation without shifting the questions. */
+    :root { --navigation-height:76px; --timer-dock-height:68px; }
+    html { scroll-padding-top:calc(var(--navigation-height) + var(--timer-dock-height) + 16px); }
+    .workspace-header { position:sticky; top:0; z-index:10; }
+    .workspace-header .topbar { position:static; }
+    .session-dock { position:fixed; height:var(--timer-dock-height); display:flex; align-items:center; gap:14px; padding:8px 16px; background:var(--card); border:1px solid var(--border); border-top:0; border-radius:0 0 14px 14px; box-shadow:0 8px 20px var(--shadow); }
+    .dock-clock { display:grid; gap:2px; min-width:74px; }
+    .dock-clock strong { font-size:21px; letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+    .dock-clock span { font-size:11px; color:var(--muted); }
+    .dock-clock span::before { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--muted); margin-right:6px; }
+    .session-dock[data-running="true"] .dock-clock span { color:var(--accent); }
+    .session-dock[data-running="true"] .dock-clock span::before { background:var(--accent); }
+    .dock-metrics { display:grid; flex:1; gap:3px; min-width:0; font-size:12px; color:var(--muted); }
+    .dock-metrics span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .dock-metrics strong { color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+    .session-dock button { min-height:44px; flex-shrink:0; }
+    #session-dock-toggle { color:var(--accent); border-color:var(--accent); min-width:86px; }
+    .session-bar[data-running="true"] { border-color:var(--accent); }
+    .questions { scroll-margin-top:0; }
+    .question-card { scroll-margin-top:12px; }
+    .question-head { align-items:flex-start; }
+    .question-head > .question-number { flex-shrink:0; font-size:12px; font-weight:600; color:var(--text); border:1px solid var(--border); border-radius:7px; padding:5px 8px; white-space:nowrap; }
+    .question-stem { max-width:72ch; }
+    .options { max-width:80ch; }
+    .letter { font-size:12px; font-weight:600; }
+    .option:hover:not(:disabled) { border-color:var(--accent); background:var(--chip); }
+    .option.selected { border-width:2px; padding:12px 14px; }
+    .question-card .actions button:focus-visible { outline-offset:2px; }
+    @media(max-width:600px) {
+      :root { --navigation-height:64px; --timer-dock-height:68px; }
+      .session-dock { gap:8px; padding:8px 10px; }
+      .dock-clock { min-width:62px; }
+      .dock-clock strong { font-size:19px; }
+      .dock-metrics { display:grid; gap:3px; font-size:11px; }
+      .dock-metrics span { overflow:hidden; text-overflow:ellipsis; }
+      .session-dock button { padding:8px 10px; font-size:12px; }
+      #session-dock-toggle { min-width:64px; }
+      #practice-top { min-width:44px; padding:8px; }
+      .question-card { padding:20px 16px; border-radius:16px; }
+      .question-head { gap:8px; }
+      .question-head > .question-number { padding:5px 6px; }
+    }
+    @media(pointer:coarse) { .option.selected { padding:13px; } }
   </style>
 </head>
 <body>
@@ -357,10 +400,17 @@
       <section class="sidebar-section"><h2>Recent practice</h2><div id="history-list"></div></section>
     </aside>
     <main class="main">
+      <div class="workspace-header">
       <nav class="topbar" aria-label="Workspace controls"><div class="breadcrumb">Workspace / <span>Prelims practice</span></div>
         <button id="filters-toggle" class="mobile-filters" aria-expanded="false" aria-controls="question-sidebar" aria-label="Toggle question filters">☰ Filters</button>
         <div class="topbar-actions"><button id="notes-open" type="button">Notes library</button><button class="ai-settings-open" type="button" aria-haspopup="dialog">⚙︎ Settings</button></div>
       </nav>
+      <section id="session-dock" class="session-dock" aria-label="Practice timer while scrolling" hidden>
+        <div class="dock-clock"><span id="session-dock-state" role="status">Ready</span><strong id="session-dock-time" role="timer" aria-live="off">00:00</strong></div>
+        <div class="dock-metrics"><span><strong id="session-dock-count">0</strong> answered</span><span><strong id="session-dock-pace">—</strong> avg / question</span></div>
+        <button id="session-dock-toggle" type="button">Start</button><button id="practice-top" class="quiet" type="button" aria-label="Back to top" title="Back to top">Top</button>
+      </section>
+      </div>
       <header class="practice-heading"><div><span class="eyebrow">YOUR STUDY WORKSPACE</span><h1>Prelims practice</h1><p>Practice, reflect, and keep what you learn.</p></div><div class="library-actions"><button id="backup-status" type="button" class="quiet" aria-haspopup="dialog" title="Manage study backups"><span id="save-status" role="status">Saved on this device · Back up</span></button></div></header>
       <section class="session-bar" aria-label="Practice timer">
         <div><span class="muted">Session time</span><strong id="session-time">00:00</strong></div>
@@ -632,7 +682,7 @@
               ${state.selected !== undefined ? `<span class="badge ${typeof state.correct !== 'boolean' ? '' : state.correct ? 'good' : 'bad'}">${typeof state.correct !== 'boolean' ? 'Not graded · no answer key' : state.correct ? 'Correct' : 'Wrong'}</span>` : state.revealed ? `<span class="badge">${q.ans ? 'Answer revealed' : 'No answer key available'}</span>` : ''}
               ${hasNote ? '<span class="badge">Note</span>' : ''}
             </div>
-            <strong class="muted">Q${index + 1}</strong>
+            <strong class="question-number">Question ${index + 1}</strong>
           </div>
           <div class="question-stem">${text}</div>
           <div class="options">${optionMarkup}</div>
@@ -1415,10 +1465,51 @@
       try { sessionStorage.setItem('uv_practice_timer', JSON.stringify({elapsed:elapsedTime(), answers:[...sessionAnswers]})); } catch {}
     }
     function renderTimer() {
-      document.getElementById('session-time').textContent = formatDuration(elapsedTime());
-      document.getElementById('session-count').textContent = sessionAnswers.size;
-      document.getElementById('session-pace').textContent = sessionAnswers.size ? formatDuration(elapsedTime() / sessionAnswers.size) : '—';
-      document.getElementById('session-toggle').textContent = sessionStarted !== null ? 'Pause' : sessionElapsed || sessionAnswers.size ? 'Resume' : 'Start timer';
+      const elapsed = elapsedTime(), running = sessionStarted !== null;
+      const action = running ? 'Pause' : sessionElapsed || sessionAnswers.size ? 'Resume' : 'Start';
+      const values = {time:formatDuration(elapsed), count:String(sessionAnswers.size), pace:sessionAnswers.size ? formatDuration(elapsed / sessionAnswers.size) : '—'};
+      for (const [field, value] of Object.entries(values)) {
+        for (const prefix of ['session-', 'session-dock-']) {
+          const node = document.getElementById(prefix + field);
+          if (node.textContent !== value) node.textContent = value;
+        }
+      }
+      document.getElementById('session-toggle').textContent = action === 'Start' ? 'Start timer' : action;
+      document.getElementById('session-dock-toggle').textContent = action;
+      document.getElementById('session-dock-toggle').setAttribute('aria-label', `${action} practice timer`);
+      const state = running ? 'Running' : action === 'Resume' ? 'Paused' : 'Ready';
+      const stateNode = document.getElementById('session-dock-state');
+      if (stateNode.textContent !== state) stateNode.textContent = state;
+      document.getElementById('session-dock').dataset.running = String(running);
+      document.querySelector('.session-bar').dataset.running = String(running);
+    }
+    function bindTimerDock() {
+      const navigation = document.querySelector('.topbar'), dock = document.getElementById('session-dock');
+      const originalClock = document.getElementById('session-time');
+      let scheduled = false;
+      const update = () => {
+        scheduled = false;
+        const rect = navigation.getBoundingClientRect();
+        document.documentElement.style.setProperty('--navigation-height', `${rect.height}px`);
+        dock.style.top = `${rect.bottom}px`;
+        dock.style.left = `${rect.left}px`;
+        dock.style.width = `${rect.width}px`;
+        const hidden = originalClock.getBoundingClientRect().bottom > rect.bottom;
+        // Keep keyboard focus usable if scrolling returns the focused dock to the full timer.
+        if (hidden && !dock.hidden && dock.contains(document.activeElement)) document.getElementById('session-toggle').focus({preventScroll:true});
+        dock.hidden = hidden;
+      };
+      const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } };
+      window.addEventListener('scroll', schedule, {passive:true});
+      window.addEventListener('resize', schedule);
+      new ResizeObserver(schedule).observe(navigation);
+      document.getElementById('session-dock-toggle').onclick = () => document.getElementById('session-toggle').click();
+      document.getElementById('practice-top').onclick = () => {
+        window.scrollTo({top:0, behavior:'instant'});
+        document.getElementById('session-toggle').focus({preventScroll:true});
+        update();
+      };
+      update();
     }
     function pauseTimer() {
       if (sessionStarted === null) return;
@@ -1455,6 +1546,7 @@
       bindStudyTools();
       bindTheme();
       bindTimer();
+      bindTimerDock();
       bindFilterEvents();
       bindTutor();
       bindResponsiveLayout();

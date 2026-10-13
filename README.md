@@ -86,7 +86,7 @@ Accounts plus a database are the next step for automatic progress/notes synchron
 
 ## Practice timer
 
-The compact practice header includes an optional session timer. Start it when ready; it counts distinct questions answered while running and shows elapsed minutes/seconds and average time per question. Retrying the same question does not increase the count. Pause excludes breaks; switching away from the tab pauses automatically. Refresh restores the session paused in the same tab. Reset clears only timing and its question count, never study progress. The timer is a practice aid, not an exam enforcement clock. `tests/timer_smoke.py` checks these controls and supports Chromium/WebKit.
+The compact practice header includes an optional session timer. Start it when ready; it counts distinct questions answered while running and shows elapsed minutes/seconds and average time per question. Retrying the same question does not increase the count. Pause excludes breaks; switching away from the tab pauses automatically. Refresh restores the session paused in the same tab. Reset clears only timing and its question count, never study progress. When you scroll past the main timer, a compact bar stays below the navigation with elapsed time, answered count, average pace, and Start/Pause/Resume. Both displays share the same session. **Top** returns to the main timer and its reset control. Question-page navigation leaves the next question below the fixed controls. The timer is a practice aid, not an exam enforcement clock. `tests/timer_smoke.py` checks these controls, scroll visibility at phone/tablet/desktop widths, tutor resizing, pagination clearance, and focus restoration, and supports Chromium/WebKit.
 
 ## Notes library and portable study backups
 
