@@ -119,6 +119,13 @@ class TutorTests(unittest.TestCase):
             header = response.read().decode('utf-8-sig').splitlines()[0].split(',')
             self.assertTrue({'Question', 'Subject', 'Year', 'Official Answer Key'}.issubset(header))
 
+    def test_stylesheet_is_public(self):
+        for method in ('GET', 'HEAD'):
+            with urlopen(Request(self.url+'/styles.css', method=method)) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers.get_content_type(), 'text/css')
+                self.assertGreater(int(response.headers['Content-Length']), 0)
+
     def test_private_files_not_served(self):
         for path in ('/.git/config', '/server.py', '/.env'):
             with self.assertRaises(HTTPError) as error:

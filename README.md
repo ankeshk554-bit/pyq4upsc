@@ -100,6 +100,8 @@ Run `python3 tests/study_tools_smoke.py` against the server to test backup round
 
 ## Workspace appearance
 
+The reading-room design uses warm paper surfaces, a deep green filter rail, and serif question text by default. Existing theme and font choices are retained. All styling lives in `styles.css`; deploy it beside `index.html` and `study-tools.js`. The interface uses local system fonts and inline icons with no remote asset dependencies.
+
 **Notes library** is available directly in the top bar. **Settings** gathers **Appearance**, **AI**, and **Data** tabs in one panel. Use Left/Right arrows or Home/End to navigate the tabs; the close button and Done remain visible while a section scrolls. Choose a theme, text size, modern sans/serif/monospace style, and line spacing; the reading preview updates immediately. Reading preferences apply to questions, answer options, tutor replies, and notes and persist on this device. Notes also have a separate base text size under Settings → Appearance. **Reset appearance** restores the default reading preferences without changing study progress or AI keys.
 
 Run `python3 tests/settings_smoke.py` against the development server to check the unified panel, saved preferences, text scaling, reset, keyboard focus, backups, notes navigation, and responsive layouts.
@@ -107,3 +109,5 @@ Run `python3 tests/settings_smoke.py` against the development server to check th
 The mobile practice header keeps the timer and statistics compact to bring questions into view sooner. The tutor offers **Connect AI** when neither a browser key nor server configuration is available. The local server's `/api/status` endpoint reports only whether AI is configured; it never returns keys or makes a provider request. Configuration does not verify key validity or provider availability. If the status check fails, the UI reports an unverified connection.
 
 Run `python3 tests/launch_smoke.py` to check the mobile question position, keyboard tabs, visible dialog controls, direct backup access and focus restoration, plus configured, disconnected, static-hosting, and unavailable AI states.
+
+Active year, subject, search, and bookmark/note filters appear above the questions and can be removed individually. Question notes have labeled editors and an explicit open/closed state. Run `python3 tests/design_smoke.py` to check filter removal, safe search labels, note controls, preserved appearance preferences, and large-text layouts.

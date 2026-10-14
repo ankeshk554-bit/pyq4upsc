@@ -24,13 +24,13 @@ class Handler(SimpleHTTPRequestHandler):
             self.respond(200, {'configured': configured})
             return
         # Serve only public website assets, never source credentials or Git metadata.
-        if self.path.split('?')[0] not in ('/', '/index.html', '/favicon.ico', '/data/questions.csv', '/study-tools.js'):
+        if self.path.split('?')[0] not in ('/', '/index.html', '/favicon.ico', '/data/questions.csv', '/study-tools.js', '/styles.css'):
             self.send_error(404)
             return
         super().do_GET()
 
     def do_HEAD(self):
-        if self.path.split('?')[0] not in ('/', '/index.html', '/favicon.ico', '/data/questions.csv', '/study-tools.js'):
+        if self.path.split('?')[0] not in ('/', '/index.html', '/favicon.ico', '/data/questions.csv', '/study-tools.js', '/styles.css'):
             self.send_error(404); return
         super().do_HEAD()
 
