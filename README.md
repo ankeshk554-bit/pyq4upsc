@@ -100,7 +100,7 @@ Run `python3 tests/study_tools_smoke.py` against the server to test backup round
 
 ## Workspace appearance
 
-The reading-room design uses warm paper surfaces, a deep green filter rail, and serif question text by default. Existing theme and font choices are retained. All styling lives in `styles.css`; deploy it beside `index.html` and `study-tools.js`. The interface uses local system fonts and inline icons with no remote asset dependencies.
+The reading-room design uses warm paper surfaces and serif question text by default. The question sidebar and mobile filter drawer follow the selected theme, including their text, search field, and filter controls. Existing theme and font choices are retained. All styling lives in `styles.css`; deploy it beside `index.html` and `study-tools.js`. The interface uses local system fonts and inline icons with no remote asset dependencies.
 
 **Notes library** is available directly in the top bar. **Settings** gathers **Appearance**, **AI**, and **Data** tabs in one panel. Use Left/Right arrows or Home/End to navigate the tabs; the close button and Done remain visible while a section scrolls. Choose a theme, text size, modern sans/serif/monospace style, and line spacing; the reading preview updates immediately. Reading preferences apply to questions, answer options, tutor replies, and notes and persist on this device. Notes also have a separate base text size under Settings → Appearance. **Reset appearance** restores the default reading preferences without changing study progress or AI keys.
 
